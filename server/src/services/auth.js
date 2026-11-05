@@ -1,9 +1,9 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import mongoose from 'mongoose';
 import { config } from '../config/env.js';
 import { User } from '../models/index.js';
 import { AppError, isDuplicateKeyError } from '../utils/errors.js';
+import { runInTransaction } from '../utils/transaction.js';
 import { MINT, postTransaction, userAccount } from './ledger.js';
 
 export function signToken(user) {
@@ -14,35 +14,40 @@ export function verifyToken(token) {
   return jwt.verify(token, config.jwtSecret);
 }
 
-export async function signup({ name, email, password }) {
+export async function signup({ name, email, password }, { now = new Date() } = {}) {
   const passwordHash = await bcrypt.hash(password, 10);
-  const session = await mongoose.startSession();
   let user;
   try {
     // The user and their welcome credits are created together: either both
     // exist or neither does. No user is ever left without their grant.
-    await session.withTransaction(async () => {
-      [user] = await User.create([{ name, email, passwordHash }], { session });
+    user = await runInTransaction(async (session) => {
+      const [created] = await User.create([{ name, email, passwordHash }], { session });
       await postTransaction(
         {
-          key: `signup:${user.id}`,
+          key: `signup:${created.id}`,
           type: 'SIGNUP_GRANT',
           memo: 'Welcome credits',
+          at: now,
           legs: [
             { account: MINT, amount: -config.signupGrantMinutes },
-            { account: userAccount(user.id), amount: config.signupGrantMinutes },
+            { account: userAccount(created.id), amount: config.signupGrantMinutes },
           ],
         },
         { session },
       );
+      return created;
     });
   } catch (err) {
     if (isDuplicateKeyError(err)) throw new AppError(409, 'EMAIL_TAKEN', 'An account with this email already exists');
     throw err;
-  } finally {
-    await session.endSession();
   }
   return { user, token: signToken(user) };
+}
+
+export async function updateProfile(userId, changes) {
+  const user = await User.findByIdAndUpdate(userId, { $set: changes }, { returnDocument: 'after', runValidators: true });
+  if (!user) throw new AppError(404, 'NOT_FOUND', 'User not found');
+  return user;
 }
 
 export async function login({ email, password }) {

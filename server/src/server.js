@@ -1,6 +1,6 @@
-import { createApp } from './app.js';
 import { config } from './config/env.js';
 import { connectDb } from './db.js';
+import { startServer } from './httpServer.js';
 
 if (!config.mongoUri) {
   console.error('MONGO_URI is not set. Copy .env.example to .env and fill it in.');
@@ -8,6 +8,4 @@ if (!config.mongoUri) {
 }
 
 await connectDb(config.mongoUri);
-createApp().listen(config.port, () => {
-  console.log(`SkillSwap API listening on http://localhost:${config.port}`);
-});
+await startServer();

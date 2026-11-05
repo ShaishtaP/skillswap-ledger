@@ -3,8 +3,9 @@ import { z } from 'zod';
 import { requireAuth } from '../middleware/auth.js';
 import { validateBody } from '../middleware/validate.js';
 import { User } from '../models/index.js';
-import { login, signup } from '../services/auth.js';
+import { login, signup, updateProfile } from '../services/auth.js';
 import { AppError } from '../utils/errors.js';
+import { skillsField } from './schemas.js';
 
 const router = Router();
 
@@ -17,6 +18,12 @@ const signupSchema = z.object({
 const loginSchema = z.object({
   email: z.email('Enter a valid email').trim().toLowerCase(),
   password: z.string().min(1, 'Password is required'),
+});
+
+const profileSchema = z.object({
+  name: z.string().trim().min(2).max(80).optional(),
+  bio: z.string().trim().max(500).optional(),
+  skills: skillsField.optional(),
 });
 
 router.post('/signup', validateBody(signupSchema), async (req, res) => {
@@ -33,6 +40,10 @@ router.get('/me', requireAuth, async (req, res) => {
   const user = await User.findById(req.user.id);
   if (!user) throw new AppError(404, 'NOT_FOUND', 'User not found');
   res.json({ user });
+});
+
+router.patch('/me', requireAuth, validateBody(profileSchema), async (req, res) => {
+  res.json({ user: await updateProfile(req.user.id, req.body) });
 });
 
 export default router;

@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { cleanJSON } from './plugins.js';
 
 export const LEDGER_TYPES = [
   'SIGNUP_GRANT', // new user receives starting credits
@@ -39,5 +40,7 @@ const blocked = ['updateOne', 'updateMany', 'findOneAndUpdate', 'replaceOne', 'd
 ledgerEntrySchema.pre(blocked, function () {
   throw new Error('Ledger entries are append-only and cannot be changed or deleted');
 });
+
+cleanJSON(ledgerEntrySchema);
 
 export const LedgerEntry = mongoose.model('LedgerEntry', ledgerEntrySchema);

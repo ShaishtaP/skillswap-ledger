@@ -1,6 +1,6 @@
-import mongoose from 'mongoose';
 import { Account, LedgerEntry } from '../models/index.js';
 import { AppError, isDuplicateKeyError } from '../utils/errors.js';
+import { runInTransaction } from '../utils/transaction.js';
 
 // Account keys. Every credit lives in exactly one of these.
 export const MINT = 'mint'; // where new credits come from; the only account allowed below zero
@@ -29,14 +29,14 @@ function validateLegs(legs) {
   }
 }
 
-async function applyTransaction({ key, type, legs, bookingId, memo }, session) {
+async function applyTransaction({ key, type, legs, bookingId, memo, at = new Date() }, session) {
   // Already written? Then this is a retry: do nothing and say so.
   if (await LedgerEntry.exists({ txKey: key }).session(session)) {
     return { applied: false, txKey: key };
   }
 
   await LedgerEntry.insertMany(
-    legs.map(({ account, amount }) => ({ txKey: key, type, account, amount, bookingId, memo })),
+    legs.map(({ account, amount }) => ({ txKey: key, type, account, amount, bookingId, memo, createdAt: at })),
     { session },
   );
 
@@ -50,7 +50,7 @@ async function applyTransaction({ key, type, legs, bookingId, memo }, session) {
         { session, returnDocument: 'after' },
       );
       if (!updated) {
-        throw new AppError(409, 'INSUFFICIENT_CREDITS', `Not enough credits in ${account}`);
+        throw new AppError(409, 'INSUFFICIENT_CREDITS', 'Not enough credits', { account });
       }
     } else {
       await Account.updateOne({ _id: account }, { $inc: { balance: amount } }, { session, upsert: true });
@@ -68,6 +68,7 @@ async function applyTransaction({ key, type, legs, bookingId, memo }, session) {
  *     legs: [{ account: MINT, amount: -120 }, { account: 'user:123', amount: 120 }],
  *   })
  *
+ * `at` is when the movement happened (defaults to now).
  * Returns { applied: true } the first time and { applied: false } for any
  * repeat of the same key. Pass `session` to join a transaction the caller
  * already started (e.g. "create the booking AND hold the credits").
@@ -78,21 +79,12 @@ export async function postTransaction(tx, { session } = {}) {
 
   if (session) return applyTransaction(tx, session);
 
-  const ownSession = await mongoose.startSession();
   try {
-    let result;
-    // withTransaction retries automatically when MongoDB reports a conflict
-    // with another transaction touching the same documents.
-    await ownSession.withTransaction(async () => {
-      result = await applyTransaction(tx, ownSession);
-    });
-    return result;
+    return await runInTransaction((ownSession) => applyTransaction(tx, ownSession));
   } catch (err) {
     // A concurrent request with the same key won the race.
     if (isDuplicateKeyError(err)) return { applied: false, txKey: tx.key };
     throw err;
-  } finally {
-    await ownSession.endSession();
   }
 }
 
@@ -102,7 +94,7 @@ export async function getBalance(account) {
 }
 
 export async function getStatement(account, { limit = 50 } = {}) {
-  return LedgerEntry.find({ account }).sort({ createdAt: -1, _id: -1 }).limit(limit).lean();
+  return LedgerEntry.find({ account }).sort({ createdAt: -1, _id: -1 }).limit(limit);
 }
 
 /**
