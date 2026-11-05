@@ -64,6 +64,7 @@ export async function bookSlot(learnerId, slotId, { now = new Date() } = {}) {
           startsAt: slot.startsAt,
           endsAt: slot.endsAt,
           credits,
+          createdAt: now,
         },
       ],
       { session },

@@ -51,7 +51,7 @@ export function notifyBooking(booking, action) {
   });
 }
 
-export function notifyDispute(dispute, action, { includeAdmins = false } = {}) {
+export function notifyDispute(dispute, action, { includeAdmins = false, actorId } = {}) {
   const rooms = [`user:${idOf(dispute.teacher)}`, `user:${idOf(dispute.learner)}`];
   if (includeAdmins) rooms.push('admins');
   emit(rooms, 'dispute:updated', {
@@ -59,5 +59,6 @@ export function notifyDispute(dispute, action, { includeAdmins = false } = {}) {
     bookingId: idOf(dispute.booking),
     status: dispute.status,
     action,
+    actorId: actorId && String(actorId),
   });
 }

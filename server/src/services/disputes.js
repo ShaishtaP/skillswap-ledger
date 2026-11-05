@@ -51,7 +51,8 @@ export async function openDispute(userId, bookingId, reason, { now = new Date() 
           learner: booking.learner,
           openedBy: userId,
           reason,
-          notes: [{ author: userId, text: reason }],
+          notes: [{ author: userId, text: reason, createdAt: now }],
+          createdAt: now,
         },
       ],
       { session },
@@ -65,7 +66,7 @@ export async function openDispute(userId, bookingId, reason, { now = new Date() 
     return { dispute: created, booking };
   });
 
-  notifyDispute(dispute, 'opened', { includeAdmins: true });
+  notifyDispute(dispute, 'opened', { includeAdmins: true, actorId: userId });
   notifyBooking({ ...booking.toJSON(), status: 'DISPUTED' }, 'disputed');
   return dispute;
 }
@@ -84,12 +85,12 @@ export async function proposeResolution(userId, disputeId, learnerRefund, { now 
     { _id: dispute._id, status: 'OPEN' },
     {
       $set: { proposal: { by: userId, learnerRefund, at: now } },
-      $push: { notes: { author: userId, kind: 'SYSTEM', text: `The ${role} proposed: ${describeSplit(learnerRefund, booking.credits)}` } },
+      $push: { notes: { author: userId, kind: 'SYSTEM', text: `The ${role} proposed: ${describeSplit(learnerRefund, booking.credits)}`, createdAt: now } },
     },
     { returnDocument: 'after' },
   );
   if (!updated) throw new AppError(409, 'DISPUTE_CLOSED', 'This dispute is already resolved');
-  notifyDispute(updated, 'proposed');
+  notifyDispute(updated, 'proposed', { actorId: userId });
   return updated;
 }
 
@@ -105,7 +106,7 @@ async function resolve(session, dispute, { learnerRefund, method, actorId, now, 
     { _id: dispute._id, status: 'OPEN' },
     {
       $set: { status: 'RESOLVED', resolution: { method, learnerRefund, teacherPayout, resolvedBy: actorId, at: now } },
-      $push: { notes: { author: actorId, kind: 'SYSTEM', text: note } },
+      $push: { notes: { author: actorId, kind: 'SYSTEM', text: note, createdAt: now } },
     },
     { session, returnDocument: 'after' },
   );
@@ -153,7 +154,7 @@ export async function acceptProposal(userId, disputeId, expectedRefund, { now = 
       note: 'Both parties agreed. Dispute resolved.',
     });
   });
-  notifyDispute(resolved, 'resolved', { includeAdmins: true });
+  notifyDispute(resolved, 'resolved', { includeAdmins: true, actorId: userId });
   notifyBooking({ ...booking.toJSON(), status: 'RESOLVED' }, 'resolved');
   return resolved;
 }
@@ -173,7 +174,7 @@ export async function adminResolve(adminId, disputeId, learnerRefund, note, { no
       note: `Admin decision: ${describeSplit(learnerRefund, credits)}.${note ? ` ${note}` : ''}`,
     });
   });
-  notifyDispute(resolved, 'resolved', { includeAdmins: true });
+  notifyDispute(resolved, 'resolved', { includeAdmins: true, actorId: adminId });
   notifyBooking({ ...booking.toJSON(), status: 'RESOLVED' }, 'resolved');
   return resolved;
 }
@@ -186,7 +187,7 @@ export async function addNote(user, disputeId, text) {
     { $push: { notes: { author: user.id, text } } },
     { returnDocument: 'after' },
   );
-  notifyDispute(updated, 'note', { includeAdmins: true });
+  notifyDispute(updated, 'note', { includeAdmins: true, actorId: user.id });
   return updated;
 }
 

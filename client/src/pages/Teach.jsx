@@ -1,0 +1,203 @@
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useState } from 'react';
+import { Link } from 'react-router';
+import { Badge, Button, Card, EmptyState, ErrorNote, Field, Input, Loading, PageHeader, Select, SkillTags, StatusBadge, Textarea } from '../components/ui.jsx';
+import { useToast } from '../context/ToastContext.jsx';
+import { api, fieldErrors } from '../lib/api.js';
+import { formatDateTime, formatMinutes, toLocalInputValue } from '../lib/format.js';
+
+const DURATIONS = [15, 30, 45, 60, 75, 90, 120, 150, 180, 240];
+
+function useRefreshOffers() {
+  const queryClient = useQueryClient();
+  return () => {
+    queryClient.invalidateQueries({ queryKey: ['my-offers'] });
+    queryClient.invalidateQueries({ queryKey: ['offers'] });
+    queryClient.invalidateQueries({ queryKey: ['offer'] });
+  };
+}
+
+function NewOfferForm({ onDone }) {
+  const refresh = useRefreshOffers();
+  const [form, setForm] = useState({ title: '', description: '', skills: '', durationMinutes: 60 });
+  const create = useMutation({
+    mutationFn: (body) => api('/offers', { method: 'POST', body }),
+    onSuccess: () => {
+      refresh();
+      onDone();
+    },
+  });
+  const errors = fieldErrors(create.error);
+  const set = (key) => (e) => setForm({ ...form, [key]: e.target.value });
+
+  return (
+    <Card className="mb-8 p-5">
+      <h2 className="font-semibold text-slate-900">New offer</h2>
+      <form
+        className="mt-4 grid gap-4 sm:grid-cols-2"
+        onSubmit={(e) => {
+          e.preventDefault();
+          create.mutate({
+            title: form.title,
+            description: form.description,
+            durationMinutes: Number(form.durationMinutes),
+            skills: form.skills.split(',').map((s) => s.trim()).filter(Boolean),
+          });
+        }}
+      >
+        <div className="sm:col-span-2">
+          <Field label="What will you teach?" htmlFor="title" error={errors.title}>
+            <Input id="title" value={form.title} onChange={set('title')} placeholder="e.g. Intro to Photography" required />
+          </Field>
+        </div>
+        <div className="sm:col-span-2">
+          <Field label="Description" htmlFor="description" error={errors.description} hint="What will the learner be able to do afterwards?">
+            <Textarea id="description" rows={3} value={form.description} onChange={set('description')} />
+          </Field>
+        </div>
+        <Field label="Skills" htmlFor="skills" error={errors.skills} hint="Comma separated, e.g. photography, art">
+          <Input id="skills" value={form.skills} onChange={set('skills')} />
+        </Field>
+        <Field label="Length (and price in credits)" htmlFor="duration" error={errors.durationMinutes}>
+          <Select id="duration" value={form.durationMinutes} onChange={set('durationMinutes')}>
+            {DURATIONS.map((m) => (
+              <option key={m} value={m}>
+                {formatMinutes(m)}
+              </option>
+            ))}
+          </Select>
+        </Field>
+        {create.error && !create.error.details.length && <ErrorNote error={create.error} className="sm:col-span-2" />}
+        <div className="flex gap-2 sm:col-span-2">
+          <Button type="submit" loading={create.isPending}>
+            Publish offer
+          </Button>
+          <Button type="button" variant="ghost" onClick={onDone}>
+            Cancel
+          </Button>
+        </div>
+      </form>
+    </Card>
+  );
+}
+
+function OfferManager({ offer }) {
+  const refresh = useRefreshOffers();
+  const toast = useToast();
+  const tomorrowEvening = new Date();
+  tomorrowEvening.setDate(tomorrowEvening.getDate() + 1);
+  tomorrowEvening.setHours(18, 0, 0, 0);
+  const [when, setWhen] = useState(toLocalInputValue(tomorrowEvening));
+
+  const onError = (err) => toast({ title: 'That did not work', description: err.message, tone: 'error' });
+  const addSlot = useMutation({
+    // datetime-local gives local time; toISOString converts it to UTC for the server.
+    mutationFn: () => api(`/offers/${offer.id}/slots`, { method: 'POST', body: { startsAt: new Date(when).toISOString() } }),
+    onSuccess: refresh,
+    onError,
+  });
+  const removeSlot = useMutation({ mutationFn: (id) => api(`/slots/${id}`, { method: 'DELETE' }), onSuccess: refresh, onError });
+  const toggle = useMutation({
+    mutationFn: () => api(`/offers/${offer.id}`, { method: 'PATCH', body: { active: !offer.active } }),
+    onSuccess: refresh,
+    onError,
+  });
+
+  return (
+    <Card className={offer.active ? '' : 'opacity-75'}>
+      <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-100 p-5">
+        <div>
+          <div className="flex items-center gap-2">
+            <Link to={`/offers/${offer.id}`} className="font-semibold text-slate-900 hover:text-teal-700">
+              {offer.title}
+            </Link>
+            {!offer.active && <Badge>Paused</Badge>}
+          </div>
+          <p className="mt-1 text-sm text-slate-500">{formatMinutes(offer.durationMinutes)} · earns {offer.durationMinutes} credits per session</p>
+          <div className="mt-2">
+            <SkillTags skills={offer.skills} />
+          </div>
+        </div>
+        <Button variant="secondary" size="sm" loading={toggle.isPending} onClick={() => toggle.mutate()}>
+          {offer.active ? 'Pause offer' : 'Activate'}
+        </Button>
+      </div>
+
+      <div className="p-5">
+        <p className="text-sm font-medium text-slate-700">Upcoming times</p>
+        {offer.slots.length === 0 ? (
+          <p className="mt-1 text-sm text-slate-500">No times yet. Add one so learners can book you.</p>
+        ) : (
+          <ul className="mt-2 flex flex-wrap gap-2">
+            {offer.slots.map((slot) => (
+              <li key={slot.id} className="flex items-center gap-2 rounded-lg border border-slate-200 py-1 pl-3 pr-1 text-sm">
+                {formatDateTime(slot.startsAt)}
+                <StatusBadge status={slot.status} />
+                {slot.status === 'OPEN' && (
+                  <button
+                    onClick={() => removeSlot.mutate(slot.id)}
+                    className="rounded px-1.5 text-slate-400 hover:bg-slate-100 hover:text-rose-600"
+                    aria-label="Remove this time"
+                    title="Remove this time"
+                  >
+                    ×
+                  </button>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+
+        {offer.active && (
+          <form
+            className="mt-4 flex flex-wrap items-end gap-2"
+            onSubmit={(e) => {
+              e.preventDefault();
+              addSlot.mutate();
+            }}
+          >
+            <Field label="Add a time" htmlFor={`when-${offer.id}`}>
+              <Input id={`when-${offer.id}`} type="datetime-local" value={when} onChange={(e) => setWhen(e.target.value)} required />
+            </Field>
+            <Button type="submit" variant="secondary" loading={addSlot.isPending}>
+              Add time
+            </Button>
+          </form>
+        )}
+      </div>
+    </Card>
+  );
+}
+
+export default function Teach() {
+  const [creating, setCreating] = useState(false);
+  const { data, isLoading, error } = useQuery({ queryKey: ['my-offers'], queryFn: () => api('/offers/mine') });
+
+  return (
+    <div>
+      <PageHeader
+        title="Teach"
+        subtitle="Share a skill, add times, and earn a credit for every minute you teach."
+        action={!creating && <Button onClick={() => setCreating(true)}>New offer</Button>}
+      />
+      {creating && <NewOfferForm onDone={() => setCreating(false)} />}
+
+      <ErrorNote error={error} />
+      {isLoading ? (
+        <Loading />
+      ) : data?.offers.length === 0 ? (
+        !creating && (
+          <EmptyState title="You aren't teaching anything yet" action={<Button onClick={() => setCreating(true)}>Create your first offer</Button>}>
+            Everyone knows something worth sharing: a language, an instrument, a tool you use at work.
+          </EmptyState>
+        )
+      ) : (
+        <div className="space-y-4">
+          {data?.offers.map((offer) => (
+            <OfferManager key={offer.id} offer={offer} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
