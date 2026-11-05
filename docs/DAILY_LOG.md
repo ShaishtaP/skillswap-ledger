@@ -29,3 +29,42 @@
 
 ### Next (Day 2)
 Offers, time slots and booking with an escrow hold.
+
+## Day 2: The complete marketplace
+
+**Goal:** finish the whole product in one push: every backend feature, the website, demo data and deployment setup.
+
+### Backend
+- **Offers and slots** (`services/offers.js`): publish, pause, search; slots can't overlap for the same teacher.
+- **Booking** (`services/bookings.js`): one transaction claims the slot (`OPEN → BOOKED`), creates the booking and moves the price into `escrow:<bookingId>`.
+- **Confirmation and settlement:** each side confirms; the second confirmation completes the booking and pays the teacher with the idempotency key `settle:<bookingId>`.
+- **Cancellations:** full refund more than 24h ahead or when the teacher cancels; 50/50 inside 24h (odd minute to the learner). A learner's cancelled slot reopens; a teacher's closes.
+- **Disputes** (`services/disputes.js`): freeze escrow; either side proposes a split, the other accepts; or an admin decides. Accepting includes the amount seen, so a changed proposal can't be accepted by mistake.
+- **Invariants** (`services/invariants.js`): escrow per booking must match its status, on top of Day 1's ledger checks.
+- **Realtime** (`services/realtime.js`): Socket.IO with JWT auth; each user has a private room; events are sent only after the transaction commits.
+- **Security:** helmet headers, rate limiting on login/signup.
+- **Clock injection:** services take an optional `now`, so tests and demo data can create sessions in the past without waiting.
+- **Demo data** (`seed/demoData.js`): 8 members and an admin with completed sessions, all three kinds of cancellation, sessions awaiting confirmation, two disputes and 30 open slots, all created through the real services.
+- `npm run demo` runs everything on an in-memory database with no setup.
+
+### Frontend (`client/`)
+React + React Router + TanStack Query + Tailwind. Pages: Browse, Offer, Login/Signup (with one-click demo accounts), Dashboard, Booking (timeline, cancel preview, dispute panel), Teach, History, Wallet, Profile, Admin.
+
+### Tested in the browser
+Walked through every flow as different users: confirm → settle, book → cancel → refund, accept a dispute proposal, admin decision, create an offer and slot, phone layout, production build. Bugs found and fixed:
+- "1 completed sessions" grammar
+- Cancelled and disputed bookings showed confirmation steps that could never happen
+- Logging out sent you to "log in to see your wallet" instead of the home page
+- Accepting a proposal showed two notifications for one action
+- Demo dates: bookings and dispute notes showed today's date instead of when they happened
+- Desktop "Log out" button also appeared in the mobile header
+
+### DevOps
+- GitHub Actions runs all tests and builds the frontend on every push.
+- `render.yaml` deploys the app as one service; guide in `docs/DEPLOYMENT.md`.
+
+### Tests: 55 passing
+New: five learners racing for one slot, rollback when credits are short, ten simultaneous confirmations settle once, every cancellation rule, cancel-vs-cancel race, dispute agreement, stale proposal, agreement-vs-admin race, HTTP flow, Socket.IO notifications, and demo data health.
+
+### Next
+Deploy to Render + Atlas and add the live link to the README.

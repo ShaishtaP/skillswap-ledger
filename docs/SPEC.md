@@ -79,16 +79,9 @@ Either party can open a dispute on a `BOOKED` session after its start time. Cred
 | Realtime | Socket.IO (booking updates pushed to each user) |
 | Database | MongoDB Atlas (replica set, required for transactions) |
 | Tests | Vitest, Supertest, mongodb-memory-server |
-| Hosting | Render (API), Vercel (frontend), MongoDB Atlas (database) |
+| Hosting | Render (one service: API + website), MongoDB Atlas (database) |
+| CI | GitHub Actions (tests + frontend build on every push) |
 
-## 7-day plan
+## Build log
 
-| Day | Scope |
-|---|---|
-| 1 | Project setup, auth, ledger service, invariant checker, tests |
-| 2 | Offers and time slots, booking with escrow hold, no double-booking |
-| 3 | Two-party confirmation, idempotent settlement, cancellations |
-| 4 | Disputes (agreement + admin), learning history search, seed data |
-| 5 | React frontend: auth, browse, book, dashboard, wallet |
-| 6 | Socket.IO live updates, dispute UI, polish |
-| 7 | Concurrency test suite, README, deployment |
+The original plan was 7 days. Day 1 built the foundation (auth and the ledger); Day 2 built everything else. See [DAILY_LOG.md](DAILY_LOG.md).

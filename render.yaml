@@ -1,0 +1,19 @@
+# Render Blueprint: one web service that runs the API and serves the built
+# React app from the same address. See docs/DEPLOYMENT.md.
+services:
+  - type: web
+    name: skillswap-ledger
+    runtime: node
+    plan: free
+    buildCommand: npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_VERSION
+        value: "22"
+      - key: MONGO_URI
+        sync: false # you paste your Atlas connection string in the Render dashboard
+      - key: JWT_SECRET
+        generateValue: true # Render creates a long random secret for you

@@ -1,0 +1,19 @@
+{
+  "name": "skillswap-ledger",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Time-credit marketplace for peer learning with an append-only, double-entry credit ledger",
+  "license": "MIT",
+  "scripts": {
+    "setup": "npm install --prefix server && npm install --prefix client",
+    "demo": "cd server && npm run demo",
+    "dev:server": "cd server && npm run dev",
+    "dev:client": "cd client && npm run dev",
+    "test": "cd server && npm test",
+    "build": "npm ci --prefix server --omit=dev && npm ci --prefix client --include=dev && npm run build --prefix client",
+    "start": "node server/src/server.js"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

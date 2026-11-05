@@ -30,8 +30,10 @@ const noteSchema = new mongoose.Schema(
     text: { type: String, required: true, maxlength: 2000 },
     // SYSTEM notes are written by the app ("Teacher proposed a 50/50 split").
     kind: { type: String, enum: ['NOTE', 'SYSTEM'], default: 'NOTE' },
+    // A plain field rather than Mongoose timestamps, which would overwrite
+    // the time we pass in when a note is pushed onto an existing dispute.
+    createdAt: { type: Date, default: Date.now },
   },
-  { timestamps: { createdAt: true, updatedAt: false } },
 );
 cleanJSON(noteSchema);
 
