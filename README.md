@@ -6,7 +6,9 @@ A time-credit marketplace for peer learning. Teach what you know to earn time cr
 
 Every credit movement is recorded in an **append-only, double-entry ledger** with **idempotent settlement**, so credits are never created, lost or awarded twice, even when requests are retried or arrive at the same moment.
 
-**Live demo:** _coming soon_ · log in with one of the [demo accounts](#demo-accounts)
+**Live demo: [skillswap-ledger.onrender.com](https://skillswap-ledger.onrender.com)** · click *Try a demo account* on the login page ([details](#demo-accounts))
+
+> Hosted on Render's free plan: if nobody has visited for a while, the first load takes 30–60 seconds while the server wakes up.
 
 ![Home page](docs/screenshots/home.jpg)
 

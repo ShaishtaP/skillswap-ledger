@@ -68,3 +68,12 @@ New: five learners racing for one slot, rollback when credits are short, ten sim
 
 ### Next
 Deploy to Render + Atlas and add the live link to the README.
+
+## Day 3: Deployed
+
+**Live at https://skillswap-ledger.onrender.com**
+
+- MongoDB Atlas free cluster, database `skillswap`, loaded with the demo community (`npm run seed -- --reset`); ledger health OK.
+- Render Blueprint (`render.yaml`) builds the React app and runs one Node service for the API, website and Socket.IO. Every push to `main` redeploys.
+- Made the seed script safe on a shared cluster: it refuses to run without a database name (MongoDB would silently use `test`) and refuses to wipe a database holding another app's collections. The first guard caught a real mistake during setup.
+- Checked the live site: health, API, auth (401 without login), SPA routes, static assets, HTTPS security headers, Socket.IO endpoint.
