@@ -34,9 +34,14 @@ export default function Signup() {
 
   return (
     <div className="mx-auto max-w-md">
-      <Card className="p-6 sm:p-8">
-        <h1 className="text-2xl font-semibold tracking-tight text-slate-900">Create your account</h1>
-        <p className="mt-1 text-sm text-slate-500">You start with 2 free hours of credits to spend on any session.</p>
+      <div className="mb-8 text-center">
+        <span className="eyebrow">Join SkillSwap</span>
+        <h1 className="mt-1 font-display text-4xl text-ink">
+          Your first <span className="gold-text">two hours</span> are on us
+        </h1>
+      </div>
+      <Card className="p-7 sm:p-9">
+        <p className="text-muted">No card needed. Spend your 120 free minutes on any session, and teach to earn more.</p>
 
         <form className="mt-6 space-y-4" onSubmit={submit}>
           <Field label="Your name" htmlFor="name" error={errors.name}>
@@ -54,9 +59,9 @@ export default function Signup() {
           </Button>
         </form>
 
-        <p className="mt-6 text-center text-sm text-slate-500">
+        <p className="mt-6 text-center text-sm text-muted">
           Already have an account?{' '}
-          <Link to="/login" className="font-medium text-teal-700 hover:underline">
+          <Link to="/login" className="font-semibold text-ox hover:underline">
             Log in
           </Link>
         </p>

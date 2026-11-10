@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { Link, useLocation, useParams } from 'react-router';
 import CancelDialog from '../components/CancelDialog.jsx';
 import DisputePanel from '../components/DisputePanel.jsx';
+import RisoArt from '../components/RisoArt.jsx';
 import { Avatar, Button, Card, ErrorNote, Field, Loading, RoleBadge, StatusBadge, Textarea } from '../components/ui.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useBookingActions } from '../hooks/useBookingActions.js';
@@ -31,14 +32,14 @@ function Timeline({ booking }) {
         <li key={step.label} className="flex items-start gap-3 text-sm">
           <span
             className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs ${
-              step.warn ? 'bg-amber-100 text-amber-700' : step.done ? 'bg-teal-600 text-white' : 'border-2 border-slate-300'
+              step.warn ? 'bg-amber-100 text-amber-700' : step.done ? 'bg-gold text-white' : 'border-2 border-line'
             }`}
           >
             {step.done && (step.warn ? '!' : '✓')}
           </span>
           <div>
-            <p className={step.done ? 'text-slate-800' : 'text-slate-400'}>{step.label}</p>
-            {step.at && <p className="text-xs text-slate-500">{formatDateTime(step.at)}</p>}
+            <p className={step.done ? 'text-ink' : 'text-muted'}>{step.label}</p>
+            {step.at && <p className="text-xs text-muted">{formatDateTime(step.at)}</p>}
           </div>
         </li>
       ))}
@@ -81,11 +82,11 @@ function Actions({ booking, role }) {
     const { refund, fee } = cancellationPreview(booking, role);
     return (
       <Card className="p-5">
-        <h2 className="font-semibold text-slate-900">Starts {relativeTime(booking.startsAt)}</h2>
-        <p className="mt-1 text-sm text-slate-500">
+        <h2 className="font-display text-2xl text-ink">Starts {relativeTime(booking.startsAt)}</h2>
+        <p className="mt-1 text-sm text-muted">
           After the session, you'll both confirm it happened and {booking.teacher.name.split(' ')[0]} will receive the credits.
         </p>
-        <p className="mt-4 text-sm text-slate-600">
+        <p className="mt-4 text-sm text-body">
           {fee > 0
             ? `Cancelling now returns ${formatMinutes(refund)} to the learner; ${formatMinutes(fee)} goes to the teacher for the late notice.`
             : 'Cancelling now gives the learner a full refund.'}
@@ -110,13 +111,13 @@ function Actions({ booking, role }) {
       <Card className="space-y-5 p-5">
         {iConfirmed ? (
           <div>
-            <h2 className="font-semibold text-slate-900">Thanks, you've confirmed</h2>
-            <p className="mt-1 text-sm text-slate-500">Waiting for {other.name} to confirm. The credits are released as soon as they do.</p>
+            <h2 className="font-display text-2xl text-ink">Thanks, you've confirmed</h2>
+            <p className="mt-1 text-sm text-muted">Waiting for {other.name} to confirm. The credits are released as soon as they do.</p>
           </div>
         ) : (
           <div>
-            <h2 className="font-semibold text-slate-900">Did the session happen?</h2>
-            <p className="mt-1 text-sm text-slate-500">
+            <h2 className="font-display text-2xl text-ink">Did the session happen?</h2>
+            <p className="mt-1 text-sm text-muted">
               Confirm if it went ahead. {booking.teacher.name.split(' ')[0]} is paid {formatMinutes(booking.credits)} once you both confirm.
             </p>
             <Button className="mt-3" loading={confirm.isPending} onClick={() => confirm.mutate(booking.id)}>
@@ -124,7 +125,7 @@ function Actions({ booking, role }) {
             </Button>
           </div>
         )}
-        <div className="border-t border-slate-100 pt-5">
+        <div className="border-t border-line pt-5">
           <ReportProblem booking={booking} />
         </div>
       </Card>
@@ -134,7 +135,7 @@ function Actions({ booking, role }) {
   if (booking.status === 'COMPLETED') {
     return (
       <Card className="border-emerald-200 bg-emerald-50 p-5 text-sm text-emerald-900">
-        <p className="font-semibold">Session completed</p>
+        <p className="font-display text-xl">Session completed</p>
         <p className="mt-1">
           {formatMinutes(booking.credits)} {role === 'teacher' ? 'were added to your balance' : `were paid to ${booking.teacher.name}`}.
         </p>
@@ -144,8 +145,8 @@ function Actions({ booking, role }) {
 
   if (booking.status === 'CANCELLED') {
     return (
-      <Card className="p-5 text-sm text-slate-600">
-        <p className="font-semibold text-slate-900">Cancelled by the {booking.cancelledBy}</p>
+      <Card className="p-5 text-sm text-body">
+        <p className="font-display text-xl text-ink">Cancelled by the {booking.cancelledBy}</p>
         <p className="mt-1">
           {formatMinutes(booking.refundMinutes)} returned to {booking.learner.name}
           {booking.feeMinutes > 0 && `, ${formatMinutes(booking.feeMinutes)} paid to ${booking.teacher.name} as a late-cancellation fee`}.
@@ -175,17 +176,22 @@ export default function BookingDetail() {
 
   return (
     <div>
-      <Link to={user.role === 'admin' && !role ? '/admin' : '/dashboard'} className="text-sm text-slate-500 hover:text-slate-700">
+      <Link to={user.role === 'admin' && !role ? '/admin' : '/dashboard'} className="label text-muted hover:text-ox">
         ← Back
       </Link>
-      <div className="mt-4 flex flex-wrap items-center gap-3">
-        <h1 className="text-2xl font-semibold tracking-tight text-slate-900">{booking.offerTitle}</h1>
-        <StatusBadge status={booking.status} />
-        {role && <RoleBadge role={role} />}
+      <div className="mt-6 flex items-center gap-6">
+        <RisoArt offer={{ title: booking.offerTitle, skills: booking.skills }} className="hidden h-28 w-24 shrink-0 rounded-xl border border-line sm:block" glyphScale={0.9} />
+        <div>
+          <div className="flex flex-wrap gap-2">
+            <StatusBadge status={booking.status} />
+            {role && <RoleBadge role={role} />}
+          </div>
+          <h1 className="mt-2 font-display text-4xl leading-tight text-ink sm:text-5xl">{booking.offerTitle}</h1>
+          <p className="mt-1.5 text-muted">
+            {formatDateTime(booking.startsAt)} – {formatTime(booking.endsAt)} · {formatMinutes(booking.credits)}
+          </p>
+        </div>
       </div>
-      <p className="mt-1 text-slate-500">
-        {formatDateTime(booking.startsAt)} – {formatTime(booking.endsAt)} · {formatMinutes(booking.credits)}
-      </p>
 
       <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_340px]">
         <div className="space-y-6">
@@ -194,7 +200,7 @@ export default function BookingDetail() {
         </div>
 
         <div className="space-y-6">
-          <Card className="divide-y divide-slate-100">
+          <Card className="divide-y divide-line">
             {[
               ['Teacher', booking.teacher],
               ['Learner', booking.learner],
@@ -202,8 +208,8 @@ export default function BookingDetail() {
               <div key={label} className="flex items-center gap-3 p-4">
                 <Avatar name={person.name} />
                 <div>
-                  <p className="text-xs uppercase tracking-wide text-slate-500">{label}</p>
-                  <p className="font-medium text-slate-800">
+                  <p className="label !text-[10px] text-muted">{label}</p>
+                  <p className="font-display text-lg text-ink">
                     {person.name}
                     {person.id === user.id && ' (you)'}
                   </p>
@@ -211,8 +217,8 @@ export default function BookingDetail() {
               </div>
             ))}
           </Card>
-          <Card className="p-5">
-            <h2 className="mb-4 text-sm font-medium text-slate-800">Progress</h2>
+          <Card className="p-6">
+            <h2 className="mb-4 label text-muted">Progress</h2>
             <Timeline booking={booking} />
           </Card>
         </div>

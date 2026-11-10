@@ -45,9 +45,14 @@ export default function Login() {
 
   return (
     <div className="mx-auto max-w-md">
-      <Card className="p-6 sm:p-8">
-        <h1 className="text-2xl font-semibold tracking-tight text-slate-900">Welcome back</h1>
-        <p className="mt-1 text-sm text-slate-500">Log in to book sessions and manage your credits.</p>
+      <div className="mb-8 text-center">
+        <span className="eyebrow">Welcome back</span>
+        <h1 className="mt-1 font-display text-4xl text-ink">
+          Log in to your <em className="text-ox">desk</em>
+        </h1>
+      </div>
+      <Card className="p-7 sm:p-9">
+        <p className="text-muted">Book sessions, confirm the ones you've had, and keep an eye on your minutes.</p>
 
         <form
           className="mt-6 space-y-4"
@@ -75,26 +80,27 @@ export default function Login() {
           </Button>
         </form>
 
-        <p className="mt-6 text-center text-sm text-slate-500">
+        <p className="mt-6 text-center text-sm text-muted">
           New here?{' '}
-          <Link to="/signup" className="font-medium text-teal-700 hover:underline">
+          <Link to="/signup" className="font-semibold text-ox hover:underline">
             Create an account
           </Link>
         </p>
       </Card>
 
-      <Card className="mt-4 p-5">
-        <p className="text-sm font-medium text-slate-800">Just looking around? Try a demo account</p>
-        <div className="mt-3 grid gap-2">
+      <Card className="mt-5 p-6">
+        <p className="label text-gold">Just looking around?</p>
+        <p className="mt-1 font-display text-lg text-ink">Try a demo account</p>
+        <div className="mt-4 grid gap-2">
           {DEMO_ACCOUNTS.map((account) => (
             <button
               key={account.email}
               disabled={pending}
               onClick={() => submit({ email: account.email, password: DEMO_PASSWORD })}
-              className="flex items-center justify-between rounded-lg border border-slate-200 px-3 py-2 text-left text-sm hover:border-teal-300 hover:bg-teal-50/50 disabled:opacity-50"
+              className="flex items-center justify-between gap-3 rounded-lg border border-line bg-ivory px-4 py-2.5 text-left text-sm transition hover:border-gold-2 hover:bg-gold-soft/50 disabled:opacity-50"
             >
-              <span className="font-medium text-slate-700">{account.label}</span>
-              <span className="text-slate-500">{account.note}</span>
+              <span className="font-display text-base text-ink">{account.label}</span>
+              <span className="text-muted">{account.note}</span>
             </button>
           ))}
         </div>

@@ -37,7 +37,7 @@ export default function History() {
 
   return (
     <div>
-      <PageHeader title="Learning history" subtitle="Every session you've taught or attended." />
+      <PageHeader eyebrow="History" title={<>Everything you've <em className="italic">swapped</em></>} subtitle="Every session you've taught or attended, searchable." />
 
       <Card className="mb-6 grid gap-3 p-4 sm:grid-cols-[1fr_auto_auto]">
         <form
@@ -67,7 +67,7 @@ export default function History() {
       </Card>
 
       {completed.length > 0 && (
-        <p className="mb-3 text-sm text-slate-500">
+        <p className="mb-3 text-sm text-muted">
           In this view: learned {formatMinutes(sum('learner'))} · taught {formatMinutes(sum('teacher'))}
         </p>
       )}
@@ -78,7 +78,7 @@ export default function History() {
       ) : data?.bookings.length === 0 ? (
         <EmptyState title="No sessions found">{filters.q || filters.role || filters.status ? 'Try removing some filters.' : 'Your sessions will appear here once you book or teach one.'}</EmptyState>
       ) : (
-        <Card className="divide-y divide-slate-100">
+        <Card className="divide-y divide-line">
           {data?.bookings.map((b) => (
             <BookingRow key={b.id} booking={b} />
           ))}

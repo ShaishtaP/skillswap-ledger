@@ -77,3 +77,26 @@ Deploy to Render + Atlas and add the live link to the README.
 - Render Blueprint (`render.yaml`) builds the React app and runs one Node service for the API, website and Socket.IO. Every push to `main` redeploys.
 - Made the seed script safe on a shared cluster: it refuses to run without a database name (MongoDB would silently use `test`) and refuses to wipe a database holding another app's collections. The first guard caught a real mistake during setup.
 - Checked the live site: health, API, auth (401 without login), SPA routes, static assets, HTTPS security headers, Socket.IO endpoint.
+
+## Day 4: Redesign
+
+The whole site was redesigned in an editorial "riso print" style: ivory paper, oxblood and antique-gold inks, Playfair Display headings. The look was chosen from several prototypes, combining a riso-zine layout, newspaper colours, and the spacious feel of premium retail sites.
+
+### Frontend
+- **Design tokens** in `client/src/index.css` (`bg-ivory`, `text-ox`, `font-display`…) so every page shares one palette.
+- **Animated hero** (`Hero.jsx`): riso ink shapes slide into "registration" and drift; the headline rises line by line; a gold sheen and a hand-drawn underline; floating ledger receipts; live member and seat counts. A soft glow keeps the text readable, and everything is disabled for `prefers-reduced-motion`.
+- **Riso artworks** (`RisoArt.jsx`): each session gets an original two-ink print picked from its skills or craft, with a stable fallback for anything new.
+- **Gallery grid** (`SessionCard.jsx`): taped prints, member-pick and new badges, "You'll leave with…" revealed on hover (always shown on touch screens).
+- **Session page** works like a shop product page: times chosen like sizes, one booking button, balance before and after, reassurance under the button.
+- **Your desk**: greeting, big balance, and the one session that needs confirming shown as an "admit one" ticket.
+- Landing sections: how the minutes move, features, comparison table, FAQ, closing call to action.
+
+### Backend
+- Offers gained `category` (the craft) and `outcome` ("You'll leave with…").
+- Listings include `taughtCount`, `memberPick` (the two most-booked offers) and `isNew` (created this week).
+- Public `/api/community/stats` and `/api/community/recent` power the hero numbers and the "recently swapped" strip.
+
+### Checked
+All pages in the browser at desktop and phone width. Fixed: every menu link showing as active (hash links), and the admin grid overflowing on phones (grid items need `min-width: 0` to shrink).
+
+### Tests: 60 passing

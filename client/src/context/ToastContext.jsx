@@ -4,11 +4,11 @@ import { createContext, useCallback, useContext, useMemo, useState } from 'react
 const ToastContext = createContext(() => {});
 
 const TONES = {
-  info: 'border-slate-200',
-  success: 'border-emerald-300',
-  error: 'border-rose-300',
+  info: 'border-line',
+  success: 'border-gold-2',
+  error: 'border-ox/40',
 };
-const DOTS = { info: 'bg-sky-500', success: 'bg-emerald-500', error: 'bg-rose-500' };
+const DOTS = { info: 'bg-muted', success: 'bg-gold', error: 'bg-ox' };
 
 let nextId = 1;
 
@@ -33,14 +33,14 @@ export function ToastProvider({ children }) {
       {children}
       <div className="pointer-events-none fixed inset-x-4 bottom-4 z-50 flex flex-col items-end gap-2 sm:left-auto sm:w-96" aria-live="polite">
         {toasts.map((t) => (
-          <div key={t.id} className={`pointer-events-auto w-full rounded-lg border bg-white px-4 py-3 shadow-lg ${TONES[t.tone]}`}>
+          <div key={t.id} className={`pointer-events-auto w-full rounded-xl border bg-card px-4 py-3.5 shadow-lift ${TONES[t.tone]}`}>
             <div className="flex items-start gap-3">
               <span className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${DOTS[t.tone]}`} />
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium text-slate-900">{t.title}</p>
-                {t.description && <p className="mt-0.5 text-sm text-slate-500">{t.description}</p>}
+                <p className="font-display text-[15px] text-ink">{t.title}</p>
+                {t.description && <p className="mt-0.5 text-sm text-muted">{t.description}</p>}
               </div>
-              <button onClick={() => dismiss(t.id)} className="text-slate-400 hover:text-slate-600" aria-label="Dismiss">
+              <button onClick={() => dismiss(t.id)} className="text-muted hover:text-body" aria-label="Dismiss">
                 ×
               </button>
             </div>

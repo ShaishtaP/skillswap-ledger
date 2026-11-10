@@ -1,12 +1,15 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Link } from 'react-router';
+import RisoArt from '../components/RisoArt.jsx';
 import { Badge, Button, Card, EmptyState, ErrorNote, Field, Input, Loading, PageHeader, Select, SkillTags, StatusBadge, Textarea } from '../components/ui.jsx';
 import { useToast } from '../context/ToastContext.jsx';
 import { api, fieldErrors } from '../lib/api.js';
 import { formatDateTime, formatMinutes, toLocalInputValue } from '../lib/format.js';
 
 const DURATIONS = [15, 30, 45, 60, 75, 90, 120, 150, 180, 240];
+// Same list as the server (server/src/models/Offer.js).
+const CATEGORIES = ['Programming', 'Languages', 'Music', 'Art', 'Productivity', 'Communication', 'Games', 'Other'];
 
 function useRefreshOffers() {
   const queryClient = useQueryClient();
@@ -19,7 +22,7 @@ function useRefreshOffers() {
 
 function NewOfferForm({ onDone }) {
   const refresh = useRefreshOffers();
-  const [form, setForm] = useState({ title: '', description: '', skills: '', durationMinutes: 60 });
+  const [form, setForm] = useState({ title: '', description: '', outcome: '', category: 'Programming', skills: '', durationMinutes: 60 });
   const create = useMutation({
     mutationFn: (body) => api('/offers', { method: 'POST', body }),
     onSuccess: () => {
@@ -31,34 +34,49 @@ function NewOfferForm({ onDone }) {
   const set = (key) => (e) => setForm({ ...form, [key]: e.target.value });
 
   return (
-    <Card className="mb-8 p-5">
-      <h2 className="font-semibold text-slate-900">New offer</h2>
+    <Card className="mb-10 p-7">
+      <span className="label text-gold">New session</span>
+      <h2 className="mt-1 font-display text-2xl text-ink">What will you teach?</h2>
       <form
-        className="mt-4 grid gap-4 sm:grid-cols-2"
+        className="mt-6 grid gap-5 sm:grid-cols-2"
         onSubmit={(e) => {
           e.preventDefault();
           create.mutate({
             title: form.title,
             description: form.description,
+            outcome: form.outcome,
+            category: form.category,
             durationMinutes: Number(form.durationMinutes),
             skills: form.skills.split(',').map((s) => s.trim()).filter(Boolean),
           });
         }}
       >
         <div className="sm:col-span-2">
-          <Field label="What will you teach?" htmlFor="title" error={errors.title}>
+          <Field label="Title" htmlFor="title" error={errors.title}>
             <Input id="title" value={form.title} onChange={set('title')} placeholder="e.g. Intro to Photography" required />
           </Field>
         </div>
         <div className="sm:col-span-2">
-          <Field label="Description" htmlFor="description" error={errors.description} hint="What will the learner be able to do afterwards?">
+          <Field label="You'll leave with" htmlFor="outcome" error={errors.outcome} hint="One line on what the learner walks away with, e.g. a photo they're proud of.">
+            <Input id="outcome" value={form.outcome} onChange={set('outcome')} maxLength={160} />
+          </Field>
+        </div>
+        <div className="sm:col-span-2">
+          <Field label="Description" htmlFor="description" error={errors.description}>
             <Textarea id="description" rows={3} value={form.description} onChange={set('description')} />
           </Field>
         </div>
+        <Field label="Craft" htmlFor="category" error={errors.category}>
+          <Select id="category" value={form.category} onChange={set('category')}>
+            {CATEGORIES.map((c) => (
+              <option key={c}>{c}</option>
+            ))}
+          </Select>
+        </Field>
         <Field label="Skills" htmlFor="skills" error={errors.skills} hint="Comma separated, e.g. photography, art">
           <Input id="skills" value={form.skills} onChange={set('skills')} />
         </Field>
-        <Field label="Length (and price in credits)" htmlFor="duration" error={errors.durationMinutes}>
+        <Field label="Length = price in credits" htmlFor="duration" error={errors.durationMinutes}>
           <Select id="duration" value={form.durationMinutes} onChange={set('durationMinutes')}>
             {DURATIONS.map((m) => (
               <option key={m} value={m}>
@@ -70,7 +88,7 @@ function NewOfferForm({ onDone }) {
         {create.error && !create.error.details.length && <ErrorNote error={create.error} className="sm:col-span-2" />}
         <div className="flex gap-2 sm:col-span-2">
           <Button type="submit" loading={create.isPending}>
-            Publish offer
+            Publish session
           </Button>
           <Button type="button" variant="ghost" onClick={onDone}>
             Cancel
@@ -104,18 +122,23 @@ function OfferManager({ offer }) {
   });
 
   return (
-    <Card className={offer.active ? '' : 'opacity-75'}>
-      <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-100 p-5">
-        <div>
-          <div className="flex items-center gap-2">
-            <Link to={`/offers/${offer.id}`} className="font-semibold text-slate-900 hover:text-teal-700">
-              {offer.title}
-            </Link>
-            {!offer.active && <Badge>Paused</Badge>}
-          </div>
-          <p className="mt-1 text-sm text-slate-500">{formatMinutes(offer.durationMinutes)} · earns {offer.durationMinutes} credits per session</p>
-          <div className="mt-2">
-            <SkillTags skills={offer.skills} />
+    <Card className={offer.active ? 'overflow-hidden' : 'overflow-hidden opacity-75'}>
+      <div className="flex flex-wrap items-start justify-between gap-4 border-b border-line p-6">
+        <div className="flex gap-5">
+          <RisoArt offer={offer} className="hidden h-24 w-20 shrink-0 rounded-lg sm:block" glyphScale={0.9} />
+          <div>
+            <span className="label text-ox">{offer.category}</span>
+            <div className="mt-1 flex items-center gap-2">
+              <Link to={`/offers/${offer.id}`} className="font-display text-xl text-ink hover:text-ox">
+                {offer.title}
+              </Link>
+              {!offer.active && <Badge>Paused</Badge>}
+            </div>
+            <p className="mt-1 text-sm text-muted">{formatMinutes(offer.durationMinutes)} · earns {offer.durationMinutes} credits per session</p>
+            {offer.outcome && <p className="mt-1 text-sm italic">You'll leave with: {offer.outcome}</p>}
+            <div className="mt-2">
+              <SkillTags skills={offer.skills} />
+            </div>
           </div>
         </div>
         <Button variant="secondary" size="sm" loading={toggle.isPending} onClick={() => toggle.mutate()}>
@@ -123,20 +146,20 @@ function OfferManager({ offer }) {
         </Button>
       </div>
 
-      <div className="p-5">
-        <p className="text-sm font-medium text-slate-700">Upcoming times</p>
+      <div className="p-6">
+        <p className="label text-muted">Upcoming times</p>
         {offer.slots.length === 0 ? (
-          <p className="mt-1 text-sm text-slate-500">No times yet. Add one so learners can book you.</p>
+          <p className="mt-1 text-sm text-muted">No times yet. Add one so learners can book you.</p>
         ) : (
           <ul className="mt-2 flex flex-wrap gap-2">
             {offer.slots.map((slot) => (
-              <li key={slot.id} className="flex items-center gap-2 rounded-lg border border-slate-200 py-1 pl-3 pr-1 text-sm">
+              <li key={slot.id} className="flex items-center gap-2 rounded-lg border border-line py-1 pl-3 pr-1 text-sm">
                 {formatDateTime(slot.startsAt)}
                 <StatusBadge status={slot.status} />
                 {slot.status === 'OPEN' && (
                   <button
                     onClick={() => removeSlot.mutate(slot.id)}
-                    className="rounded px-1.5 text-slate-400 hover:bg-slate-100 hover:text-rose-600"
+                    className="rounded px-1.5 text-muted hover:bg-champagne hover:text-rose-600"
                     aria-label="Remove this time"
                     title="Remove this time"
                   >
@@ -176,9 +199,10 @@ export default function Teach() {
   return (
     <div>
       <PageHeader
-        title="Teach"
-        subtitle="Share a skill, add times, and earn a credit for every minute you teach."
-        action={!creating && <Button onClick={() => setCreating(true)}>New offer</Button>}
+        eyebrow="Teach"
+        title={<>Share what you <em className="italic">know</em></>}
+        subtitle="Publish a session, add times, and earn a credit for every minute you teach."
+        action={!creating && <Button onClick={() => setCreating(true)}>New session</Button>}
       />
       {creating && <NewOfferForm onDone={() => setCreating(false)} />}
 
@@ -187,7 +211,7 @@ export default function Teach() {
         <Loading />
       ) : data?.offers.length === 0 ? (
         !creating && (
-          <EmptyState title="You aren't teaching anything yet" action={<Button onClick={() => setCreating(true)}>Create your first offer</Button>}>
+          <EmptyState title="You aren't teaching anything yet" action={<Button onClick={() => setCreating(true)}>Create your first session</Button>}>
             Everyone knows something worth sharing: a language, an instrument, a tool you use at work.
           </EmptyState>
         )

@@ -14,7 +14,8 @@ Every credit movement is recorded in an **append-only, double-entry ledger** wit
 
 ## Features
 
-- **Offers and time slots.** Publish what you teach and add times; overlapping slots are rejected.
+- **Offers and time slots.** Publish what you teach, pick its craft, say what learners will leave with, and add times; overlapping slots are rejected.
+- **Gallery-style browsing.** Every session gets an original two-ink riso artwork, chosen from its skills; browse by craft, see member picks, new sessions and how often each was taught.
 - **Escrow booking.** Booking a slot moves the learner's credits into a per-booking escrow account.
 - **Two-party confirmation.** The teacher is paid only after both people confirm the session happened.
 - **Cancellation policy.** Full refund more than 24h before (or if the teacher cancels); 50/50 inside 24h.
@@ -22,6 +23,7 @@ Every credit movement is recorded in an **append-only, double-entry ledger** wit
 - **Searchable learning history**, wallet statement and profile.
 - **Live updates.** Socket.IO pushes booking and dispute changes to both people instantly.
 - **Admin tools.** Ledger health checks, platform stats and a dispute queue.
+- **Animated, accessible hero.** Riso ink shapes slide into registration and follow the mouse; live community numbers count up; everything turns off for people who prefer reduced motion.
 
 | Dashboard | Dispute resolution | Admin |
 |---|---|---|
@@ -149,12 +151,13 @@ Other members: `priya`, `daniel`, `kabir`, `sara`, `arjun` (all `@skillswap.test
 npm test
 ```
 
-55 tests run against a real MongoDB replica set started in memory:
+60 tests run against a real MongoDB replica set started in memory:
 
 - **Ledger:** balanced legs, integer amounts, idempotency under 10 simultaneous retries, overdraft protection under parallel spends, append-only enforcement, tamper detection
 - **Bookings:** escrow hold, five learners racing for one slot, rollback when credits are short, simultaneous confirmations settle once, all cancellation rules and races
 - **Disputes:** freezing escrow, agreement, stale proposals, admin decisions, agreement vs admin race, access control
 - **API and realtime:** full HTTP flow, validation, authorization, Socket.IO notifications and auth
+- **Community:** taught counts, member picks, new offers, category filter, homepage stats and recent swaps
 - **Demo data:** every scenario seeds correctly and leaves the ledger healthy
 
 ## API
@@ -164,7 +167,7 @@ npm test
 | POST | `/api/auth/signup` · `/api/auth/login` | Create account / log in → `{ user, token }` |
 | GET · PATCH | `/api/auth/me` | Current user / update profile |
 | GET | `/api/wallet` | Balance and recent ledger entries |
-| GET | `/api/offers?q=&skill=` | Search active offers (public) |
+| GET | `/api/offers?q=&skill=&category=` | Search active offers with taught count, member pick and new flags (public) |
 | GET | `/api/offers/:id` | Offer with open slots (public) |
 | GET | `/api/offers/mine` | Your offers with upcoming slots |
 | POST · PATCH | `/api/offers` · `/api/offers/:id` | Create / update or pause an offer |
@@ -176,6 +179,7 @@ npm test
 | POST | `/api/bookings/:id/confirm` · `/cancel` · `/dispute` | Confirm attendance, cancel, open a dispute |
 | GET | `/api/disputes/:id` | Dispute with timeline |
 | POST | `/api/disputes/:id/propose` · `/accept` · `/notes` | Propose a split, accept it, add a message |
+| GET | `/api/community/stats` · `/api/community/recent` | Homepage numbers and recently completed sessions (public) |
 | GET | `/api/admin/health` · `/api/admin/stats` · `/api/admin/disputes` | Admin only |
 | POST | `/api/admin/disputes/:id/resolve` | Admin decision |
 

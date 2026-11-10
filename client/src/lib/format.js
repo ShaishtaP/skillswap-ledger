@@ -18,6 +18,10 @@ export const formatDay = (d) => dayLabel.format(new Date(d));
 export const formatDate = (d) => shortDate.format(new Date(d));
 export const formatTime = (d) => time.format(new Date(d));
 
+// "Sat 09:00", the short form used on session cards.
+const weekday = new Intl.DateTimeFormat(undefined, { weekday: 'short' });
+export const formatSlotShort = (d) => `${weekday.format(new Date(d))} ${formatTime(d)}`;
+
 const relative = new Intl.RelativeTimeFormat(undefined, { numeric: 'auto' });
 export function relativeTime(d, now = Date.now()) {
   const diff = new Date(d).getTime() - now;

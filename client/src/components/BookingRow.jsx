@@ -16,11 +16,11 @@ export default function BookingRow({ booking, actions, showStatus = true }) {
         <Avatar name={other?.name} />
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <p className="truncate font-medium text-slate-900">{booking.offerTitle}</p>
+            <p className="truncate font-medium text-ink">{booking.offerTitle}</p>
             <RoleBadge role={role} />
             {showStatus && <StatusBadge status={booking.status} />}
           </div>
-          <p className="mt-0.5 text-sm text-slate-500">
+          <p className="mt-0.5 text-sm text-muted">
             {role === 'teacher' ? 'Teaching' : 'With'} {other?.name} · {formatDateTime(booking.startsAt)} ({relativeTime(booking.startsAt)}) ·{' '}
             {formatMinutes(booking.credits)}
           </p>

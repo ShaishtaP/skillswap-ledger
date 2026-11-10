@@ -22,13 +22,13 @@ export default function Profile() {
 
   return (
     <div className="mx-auto max-w-2xl">
-      <PageHeader title="Your profile" subtitle="Learners see this on your offers." />
+      <PageHeader eyebrow="Profile" title={<>How learners <em className="italic">see you</em></>} subtitle="Your name, bio and skills appear on every session you teach." />
       <Card className="p-6">
         <div className="mb-6 flex items-center gap-4">
           <Avatar name={form.name} size="lg" />
           <div>
-            <p className="font-semibold text-slate-900">{user.name}</p>
-            <p className="text-sm text-slate-500">
+            <p className="font-semibold text-ink">{user.name}</p>
+            <p className="text-sm text-muted">
               {user.email}
               {user.role === 'admin' && ' · admin'}
             </p>

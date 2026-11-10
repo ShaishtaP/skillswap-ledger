@@ -1,149 +1,161 @@
 import { useQuery } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useRealtime } from '../hooks/useRealtime.js';
 import { api } from '../lib/api.js';
 import { formatMinutes } from '../lib/format.js';
-import { Avatar, Button } from './ui.jsx';
+import { Avatar, Button, cx } from './ui.jsx';
 
-function Logo() {
+export function Logo({ className }) {
   return (
-    <Link to="/" className="flex items-center gap-2 font-semibold text-slate-900">
-      <img src="/favicon.svg" alt="" className="h-7 w-7" />
-      <span>
-        SkillSwap <span className="font-normal text-slate-400">Ledger</span>
-      </span>
+    <Link to="/" className={cx('font-display text-[23px] font-bold text-ink', className)}>
+      Skill<span className="italic text-gold">/</span>Swap
     </Link>
   );
 }
 
-function navClass({ isActive }) {
-  return `rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-    isActive ? 'bg-teal-50 text-teal-700' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
-  }`;
+const linkClass = ({ isActive }) => cx('text-[15px] transition-colors hover:text-ox', isActive ? 'text-ox' : 'text-body');
+
+// Links like "/#how" jump to a section of the homepage. NavLink only compares
+// the path, so it would mark them all as "active"; use a plain Link instead.
+function MenuLink({ to, className, children }) {
+  if (to.includes('#')) {
+    return (
+      <Link to={to} className={typeof className === 'function' ? className({ isActive: false }) : className}>
+        {children}
+      </Link>
+    );
+  }
+  return (
+    <NavLink to={to} end={to === '/'} className={className}>
+      {children}
+    </NavLink>
+  );
 }
 
 export default function Layout() {
   const { user, logout: endSession } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const [menuOpen, setMenuOpen] = useState(false);
+  useRealtime(user);
+
+  const wallet = useQuery({ queryKey: ['wallet'], queryFn: () => api('/wallet'), enabled: Boolean(user) });
   const logout = () => {
     navigate('/');
     endSession();
   };
-  const [menuOpen, setMenuOpen] = useState(false);
-  const location = useLocation();
-  useRealtime(user);
 
-  const wallet = useQuery({ queryKey: ['wallet'], queryFn: () => api('/wallet'), enabled: Boolean(user) });
+  useEffect(() => setMenuOpen(false), [location.pathname]);
+  // Jump to "#how" etc. when a hash link is followed.
+  useEffect(() => {
+    if (location.hash) document.querySelector(location.hash)?.scrollIntoView({ behavior: 'smooth' });
+    else window.scrollTo(0, 0);
+  }, [location.pathname, location.hash]);
 
   const links = user
     ? [
         ['/', 'Browse'],
-        ['/dashboard', 'Dashboard'],
+        ['/dashboard', 'My desk'],
         ['/teach', 'Teach'],
         ['/history', 'History'],
         ['/wallet', 'Wallet'],
         ...(user.role === 'admin' ? [['/admin', 'Admin']] : []),
       ]
-    : [['/', 'Browse']];
+    : [
+        ['/', 'Browse'],
+        ['/#how', 'How it works'],
+        ['/#features', 'Features'],
+        ['/#faq', 'Questions'],
+      ];
 
-  // Close the mobile menu whenever the page changes.
-  const [lastPath, setLastPath] = useState(location.pathname);
-  if (lastPath !== location.pathname) {
-    setLastPath(location.pathname);
-    setMenuOpen(false);
-  }
+  // The landing page manages its own full-width sections; every other page
+  // sits in a centred column.
+  const fullBleed = location.pathname === '/';
 
   return (
     <div className="flex min-h-screen flex-col">
-      <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur">
-        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4">
-          <div className="flex items-center gap-6">
-            <Logo />
-            <nav className="hidden items-center gap-1 md:flex">
-              {links.map(([to, label]) => (
-                <NavLink key={to} to={to} end={to === '/'} className={navClass}>
-                  {label}
-                </NavLink>
-              ))}
-            </nav>
-          </div>
-
-          <div className="flex items-center gap-2">
+      <header className="sticky top-0 z-40 border-b border-line bg-ivory/85 backdrop-blur-md">
+        <div className="mx-auto flex h-[70px] max-w-6xl items-center justify-between gap-6 px-5 sm:px-7">
+          <Logo />
+          <nav className="hidden items-center gap-7 lg:flex">
+            {links.map(([to, label]) => (
+              <MenuLink key={to} to={to} className={linkClass}>
+                {label}
+              </MenuLink>
+            ))}
+          </nav>
+          <div className="flex items-center gap-3">
             {user ? (
               <>
-                <Link
-                  to="/wallet"
-                  className="hidden rounded-full bg-teal-50 px-3 py-1 text-sm font-medium text-teal-700 ring-1 ring-teal-600/20 sm:inline-block"
-                  title="Your time-credit balance"
-                >
+                <Link to="/wallet" className="hidden items-center gap-2 rounded-full border border-line bg-card px-3.5 py-1.5 font-mono text-[13px] text-ink sm:inline-flex" title="Your time-credit balance">
+                  <span className="h-1.5 w-1.5 rounded-full bg-gold" />
                   {wallet.data ? formatMinutes(wallet.data.balance) : '…'}
                 </Link>
-                <Link to="/profile" className="hidden items-center gap-2 rounded-lg px-2 py-1 hover:bg-slate-100 sm:flex">
+                <Link to="/profile" className="hidden sm:block" title="Your profile">
                   <Avatar name={user.name} size="sm" />
-                  <span className="text-sm font-medium text-slate-700">{user.name.split(' ')[0]}</span>
                 </Link>
-                <span className="hidden md:block">
-                  <Button variant="ghost" size="sm" onClick={logout}>
-                    Log out
-                  </Button>
-                </span>
+                <button onClick={logout} className="hidden text-[15px] text-body hover:text-ox lg:block">
+                  Log out
+                </button>
               </>
             ) : (
               <>
-                <Button variant="ghost" size="sm" to="/login">
+                <Link to="/login" className="hidden text-[15px] hover:text-ox sm:block">
                   Log in
-                </Button>
-                <Button size="sm" to="/signup">
-                  Sign up
+                </Link>
+                <Button to="/signup" size="sm">
+                  Get 2 free hours
                 </Button>
               </>
             )}
-            <button
-              className="rounded-lg p-2 text-slate-600 hover:bg-slate-100 md:hidden"
-              onClick={() => setMenuOpen((open) => !open)}
-              aria-label="Menu"
-              aria-expanded={menuOpen}
-            >
+            <button className="rounded-lg p-2 text-ink hover:bg-champagne lg:hidden" onClick={() => setMenuOpen((o) => !o)} aria-label="Menu" aria-expanded={menuOpen}>
               <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                <path d="M3 5h14v2H3zM3 9h14v2H3zM3 13h14v2H3z" />
+                <path d="M3 5h14v1.5H3zM3 9.25h14v1.5H3zM3 13.5h14V15H3z" />
               </svg>
             </button>
           </div>
         </div>
 
         {menuOpen && (
-          <nav className="border-t border-slate-200 px-4 py-3 md:hidden">
+          <nav className="border-t border-line bg-ivory px-5 py-4 lg:hidden">
             <div className="flex flex-col gap-1">
               {links.map(([to, label]) => (
-                <NavLink key={to} to={to} end={to === '/'} className={navClass}>
+                <MenuLink key={to} to={to} className={(s) => cx(linkClass(s), 'rounded-lg px-3 py-2.5 hover:bg-champagne')}>
                   {label}
-                </NavLink>
+                </MenuLink>
               ))}
-              {user && (
+              {user ? (
                 <>
-                  <NavLink to="/profile" className={navClass}>
+                  <NavLink to="/profile" className={(s) => cx(linkClass(s), 'rounded-lg px-3 py-2.5 hover:bg-champagne')}>
                     Profile · {wallet.data ? formatMinutes(wallet.data.balance) : '…'}
                   </NavLink>
-                  <button onClick={logout} className="rounded-lg px-3 py-2 text-left text-sm font-medium text-slate-600 hover:bg-slate-100">
+                  <button onClick={logout} className="rounded-lg px-3 py-2.5 text-left text-[15px] text-body hover:bg-champagne">
                     Log out
                   </button>
                 </>
+              ) : (
+                <NavLink to="/login" className={(s) => cx(linkClass(s), 'rounded-lg px-3 py-2.5 hover:bg-champagne')}>
+                  Log in
+                </NavLink>
               )}
             </div>
           </nav>
         )}
       </header>
 
-      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8">
+      <main className={cx('flex-1', !fullBleed && 'mx-auto w-full max-w-6xl px-5 py-12 sm:px-7 sm:py-16')}>
         <Outlet />
       </main>
 
-      <footer className="border-t border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-2 px-4 py-6 text-sm text-slate-500">
-          <p>SkillSwap Ledger · time credits are fictional and never real money.</p>
-          <p>1 credit = 1 minute of teaching</p>
+      <footer className="bg-ink text-[#cfc7b6]">
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-5 py-7 font-mono text-xs tracking-wide sm:px-7">
+          <span className="font-display text-base tracking-normal text-white">
+            Skill<span className="italic text-gold-2">/</span>Swap
+          </span>
+          <span>Every minute accounted for · credits are never real money</span>
+          <span>1 credit = 1 minute of teaching</span>
         </div>
       </footer>
     </div>

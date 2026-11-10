@@ -1,67 +1,29 @@
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
-import { Link, useSearchParams } from 'react-router';
-import { Avatar, Button, Card, EmptyState, ErrorNote, Input, Loading, SkillTags } from '../components/ui.jsx';
+import { useSearchParams } from 'react-router';
+import Hero from '../components/Hero.jsx';
+import LandingSections from '../components/LandingSections.jsx';
+import SessionCard from '../components/SessionCard.jsx';
+import Ticker from '../components/Ticker.jsx';
+import { Button, EmptyState, ErrorNote, Frame, Input, Loading, SectionHead, cx } from '../components/ui.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
+import { useReveal } from '../hooks/useReveal.js';
 import { api, queryString } from '../lib/api.js';
-import { formatDateTime, formatMinutes } from '../lib/format.js';
 
-function Hero() {
+// Logged-in members skip the marketing hero and get a short welcome instead.
+function Welcome({ user, stats }) {
   return (
-    <section className="mb-10 overflow-hidden rounded-2xl bg-gradient-to-br from-teal-600 to-teal-800 px-6 py-12 text-white sm:px-10">
-      <p className="text-sm font-medium uppercase tracking-wider text-teal-100">Peer learning, paid in time</p>
-      <h1 className="mt-3 max-w-2xl text-3xl font-semibold tracking-tight sm:text-4xl">Teach an hour. Learn an hour.</h1>
-      <p className="mt-4 max-w-xl text-teal-50">
-        Share what you know and earn time credits. Spend them learning from others. Every minute is tracked in a tamper-proof ledger,
-        so credits are never lost or paid twice.
-      </p>
-      <div className="mt-6 flex flex-wrap gap-3">
-        <Button to="/signup" className="bg-white !text-teal-800 hover:bg-teal-50">
-          Get 2 free hours
-        </Button>
-        <Button to="/login" variant="ghost" className="text-white hover:bg-white/10">
-          Try a demo account
-        </Button>
-      </div>
-      <div className="mt-10 grid max-w-2xl gap-4 text-sm sm:grid-cols-3">
-        {[
-          ['1. Book', 'Credits are held safely until the session happens.'],
-          ['2. Meet', 'Learn together over a call or in person.'],
-          ['3. Confirm', 'When you both confirm, the teacher gets paid.'],
-        ].map(([title, text]) => (
-          <div key={title} className="rounded-lg bg-white/10 p-4">
-            <p className="font-semibold">{title}</p>
-            <p className="mt-1 text-teal-50">{text}</p>
-          </div>
-        ))}
-      </div>
-    </section>
-  );
-}
-
-function OfferCard({ offer }) {
-  return (
-    <Link to={`/offers/${offer.id}`} className="group">
-      <Card className="flex h-full flex-col p-5 transition-shadow group-hover:shadow-md">
-        <SkillTags skills={offer.skills} />
-        <h3 className="mt-3 font-semibold text-slate-900 group-hover:text-teal-700">{offer.title}</h3>
-        <p className="mt-1 line-clamp-2 text-sm text-slate-500">{offer.description}</p>
-        <div className="mt-4 flex items-center gap-2 text-sm text-slate-600">
-          <Avatar name={offer.teacher?.name} size="sm" />
-          {offer.teacher?.name}
-        </div>
-        <div className="mt-auto flex items-center justify-between border-t border-slate-100 pt-4 text-sm">
-          <span className="font-medium text-slate-700">{formatMinutes(offer.durationMinutes)}</span>
-          {offer.openSlots > 0 ? (
-            <span className="text-teal-700">
-              Next: {formatDateTime(offer.nextSlotAt)}
-            </span>
-          ) : (
-            <span className="text-slate-400">No open times</span>
-          )}
-        </div>
-      </Card>
-    </Link>
+    <div className="mx-auto max-w-6xl px-5 pt-16 sm:px-7">
+      <span className="eyebrow">Welcome back</span>
+      <h1 className="mt-1 font-display text-4xl leading-tight text-ink sm:text-[56px]">
+        What will you learn, <em className="text-ox">{user.name.split(' ')[0]}?</em>
+      </h1>
+      {stats && (
+        <p className="mt-3 text-muted">
+          {stats.openSeats} open seats this week across {stats.crafts} crafts.
+        </p>
+      )}
+    </div>
   );
 }
 
@@ -69,81 +31,103 @@ export default function Browse() {
   const { user } = useAuth();
   const [params, setParams] = useSearchParams();
   const q = params.get('q') ?? '';
-  const skill = params.get('skill') ?? '';
+  const category = params.get('category') ?? '';
   const [draft, setDraft] = useState(q);
 
-  const offers = useQuery({ queryKey: ['offers', { q, skill }], queryFn: () => api(`/offers${queryString({ q, skill })}`) });
-  // Unfiltered list, used to show the most common skills as quick filters.
+  const offers = useQuery({ queryKey: ['offers', { q, category }], queryFn: () => api(`/offers${queryString({ q, category })}`) });
+  // Unfiltered list, used for the craft buttons and their counts.
   const all = useQuery({ queryKey: ['offers', {}], queryFn: () => api('/offers') });
+  const stats = useQuery({ queryKey: ['community', 'stats'], queryFn: () => api('/community/stats') });
+  useReveal([offers.data, all.data]);
 
   const counts = new Map();
-  for (const offer of all.data?.offers ?? []) for (const s of offer.skills) counts.set(s, (counts.get(s) ?? 0) + 1);
-  const popular = [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 10).map(([s]) => s);
+  for (const offer of all.data?.offers ?? []) counts.set(offer.category, (counts.get(offer.category) ?? 0) + 1);
+  const crafts = [...counts.entries()].sort((a, b) => b[1] - a[1]);
 
-  const update = (next) => setParams(Object.fromEntries(Object.entries({ q, skill, ...next }).filter(([, v]) => v)));
+  const update = (next) => setParams(Object.fromEntries(Object.entries({ q, category, ...next }).filter(([, v]) => v)), { preventScrollReset: true });
+  const chip = (active) =>
+    cx(
+      'rounded-full border px-4 py-2 text-sm shadow-[0_2px_6px_-4px_rgba(80,60,20,.3)] transition',
+      active ? 'border-ink bg-ink text-ivory' : 'border-line bg-card hover:border-gold-2 hover:text-ox',
+    );
+  const list = offers.data?.offers ?? [];
 
   return (
     <div>
-      {!user && <Hero />}
+      {user ? <Welcome user={user} stats={stats.data} /> : <Hero />}
+      {!user && <Ticker />}
 
-      <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h2 className="text-2xl font-semibold tracking-tight text-slate-900">{user ? `What do you want to learn, ${user.name.split(' ')[0]}?` : 'Browse sessions'}</h2>
-          <p className="mt-1 text-slate-500">Book a time that suits you. You only pay when the session happens.</p>
-        </div>
-        <form
-          className="flex w-full gap-2 sm:w-auto"
-          onSubmit={(e) => {
-            e.preventDefault();
-            update({ q: draft.trim() });
-          }}
-        >
-          <Input value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="Search Python, guitar, Excel…" className="sm:w-72" aria-label="Search" />
-          <Button type="submit">Search</Button>
-        </form>
-      </div>
-
-      {popular.length > 0 && (
-        <div className="mb-6 flex flex-wrap gap-2">
-          {popular.map((s) => (
-            <button
-              key={s}
-              onClick={() => update({ skill: skill === s ? '' : s })}
-              className={`rounded-full px-3 py-1 text-sm ring-1 ring-inset transition-colors ${
-                skill === s ? 'bg-teal-600 text-white ring-teal-600' : 'bg-white text-slate-600 ring-slate-200 hover:ring-slate-300'
-              }`}
-            >
-              {s}
-            </button>
-          ))}
-          {(q || skill) && (
-            <button
-              onClick={() => {
-                setDraft('');
-                setParams({});
+      <section id="sessions" className="mx-auto max-w-6xl scroll-mt-20 px-5 pt-16 sm:px-7 sm:pt-24">
+        <Frame label="skillswap · sessions" className="reveal mx-auto max-w-[920px]">
+          <div className="bg-gradient-to-b from-card to-[#f6eddc] px-5 py-10 text-center sm:px-10">
+            <h3 className="font-display text-[26px] leading-snug text-ink sm:text-[34px]">
+              <span className="gold-text">{stats.data?.openSeats ?? '…'} open seats</span> across {stats.data?.crafts ?? '…'} crafts, all paid in minutes
+            </h3>
+            <p className="mx-auto mt-2.5 mb-6 max-w-[520px]">Pick a craft, choose a time that suits you, and your minutes wait safely until the session happens.</p>
+            <div className="mb-3.5 label text-gold">Browse by craft</div>
+            <div className="flex flex-wrap justify-center gap-2.5">
+              <button className={chip(!category)} onClick={() => update({ category: '' })}>
+                Everything <small className="ml-1.5 font-mono text-[11px] opacity-70">{all.data?.offers.length ?? ''}</small>
+              </button>
+              {crafts.map(([name, count]) => (
+                <button key={name} className={chip(category === name)} onClick={() => update({ category: category === name ? '' : name })}>
+                  {name} <small className="ml-1.5 font-mono text-[11px] opacity-70">{count}</small>
+                </button>
+              ))}
+            </div>
+            <form
+              className="mx-auto mt-6 flex max-w-md gap-2"
+              onSubmit={(e) => {
+                e.preventDefault();
+                update({ q: draft.trim() });
               }}
-              className="px-2 text-sm text-slate-500 underline hover:text-slate-700"
             >
-              Clear filters
-            </button>
+              <Input value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="Or search: python, guitar, excel…" aria-label="Search sessions" />
+              <Button type="submit" variant="secondary">
+                Search
+              </Button>
+            </form>
+          </div>
+        </Frame>
+
+        <div className="pt-20 sm:pt-24">
+          <SectionHead
+            className="reveal"
+            eyebrow={category || (q ? `Results for “${q}”` : 'This week')}
+            title={category || q ? <>Sessions to <em className="italic">book</em></> : <>Picked by <em className="italic">members</em></>}
+            lead="Every session tells you what you'll walk away with, so you know exactly what your minutes buy."
+          />
+          <ErrorNote error={offers.error} />
+          {offers.isLoading ? (
+            <Loading label="Finding sessions…" />
+          ) : list.length === 0 ? (
+            <EmptyState
+              title="Nothing matches yet"
+              action={
+                <div className="flex justify-center gap-3">
+                  <Button variant="secondary" onClick={() => { setDraft(''); setParams({}); }}>
+                    Clear filters
+                  </Button>
+                  {user && <Button to="/teach">Teach it yourself</Button>}
+                </div>
+              }
+            >
+              Try another craft or word.
+            </EmptyState>
+          ) : (
+            <div className="grid grid-cols-2 gap-x-4 gap-y-12 sm:gap-x-6 lg:grid-cols-4 lg:gap-y-14">
+              {list.map((offer, i) => (
+                <div key={offer.id} className="reveal">
+                  <SessionCard offer={offer} tilt={i % 2 === 1} />
+                </div>
+              ))}
+            </div>
           )}
         </div>
-      )}
+      </section>
 
-      <ErrorNote error={offers.error} />
-      {offers.isLoading ? (
-        <Loading label="Finding sessions…" />
-      ) : offers.data?.offers.length === 0 ? (
-        <EmptyState title="No sessions match your search" action={user && <Button to="/teach" variant="secondary">Offer to teach it yourself</Button>}>
-          Try a different word, or clear the filters.
-        </EmptyState>
-      ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {offers.data?.offers.map((offer) => (
-            <OfferCard key={offer.id} offer={offer} />
-          ))}
-        </div>
-      )}
+      {!user && <LandingSections />}
+      {user && <div className="pb-24" />}
     </div>
   );
 }

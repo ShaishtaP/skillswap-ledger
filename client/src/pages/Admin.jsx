@@ -12,8 +12,8 @@ function HealthCard() {
     <Card className={`p-5 ${data && !data.ok ? 'border-rose-300' : ''}`}>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="font-semibold text-slate-900">Ledger health</h2>
-          <p className="mt-1 text-sm text-slate-500">Checks that credits add up everywhere, recomputed from every ledger entry.</p>
+          <h2 className="font-display text-xl text-ink">Ledger health</h2>
+          <p className="mt-1 text-sm text-muted">Checks that credits add up everywhere, recomputed from every ledger entry.</p>
         </div>
         <Button variant="secondary" size="sm" loading={isFetching} onClick={() => refetch()}>
           Run checks
@@ -26,9 +26,9 @@ function HealthCard() {
           <div className={`flex items-center gap-2 font-medium ${data.ok ? 'text-emerald-700' : 'text-rose-700'}`}>
             <span className={`h-2.5 w-2.5 rounded-full ${data.ok ? 'bg-emerald-500' : 'bg-rose-500'}`} />
             {data.ok ? 'All checks passed' : 'Problems found'}
-            <span className="text-sm font-normal text-slate-400">· {formatDateTime(data.checkedAt)}</span>
+            <span className="text-sm font-normal text-muted">· {formatDateTime(data.checkedAt)}</span>
           </div>
-          <ul className="mt-3 space-y-1 text-sm text-slate-600">
+          <ul className="mt-3 space-y-1 text-sm text-body">
             <li>✓ All {data.ledger.accountsChecked} accounts sum to {data.ledger.total} (nothing created or lost)</li>
             <li>✓ Every stored balance matches its ledger entries</li>
             <li>✓ No member has a negative balance</li>
@@ -60,8 +60,8 @@ function Stats() {
     <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
       {items.map(([label, value]) => (
         <Card key={label} className="p-4">
-          <p className="text-xs text-slate-500">{label}</p>
-          <p className="mt-1 text-xl font-semibold text-slate-900">{value}</p>
+          <p className="text-xs text-muted">{label}</p>
+          <p className="mt-1 font-display text-3xl text-ink">{value}</p>
         </Card>
       ))}
     </div>
@@ -74,14 +74,14 @@ function Disputes() {
 
   return (
     <Card>
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-5 py-4">
-        <h2 className="font-semibold text-slate-900">Disputes</h2>
-        <div className="flex rounded-lg bg-slate-100 p-1 text-sm">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-5 py-4">
+        <h2 className="font-display text-xl text-ink">Disputes</h2>
+        <div className="flex rounded-lg bg-champagne p-1 text-sm">
           {['OPEN', 'RESOLVED'].map((s) => (
             <button
               key={s}
               onClick={() => setStatus(s)}
-              className={`rounded-md px-3 py-1 ${status === s ? 'bg-white font-medium text-slate-900 shadow-sm' : 'text-slate-500'}`}
+              className={`rounded-md px-3 py-1 ${status === s ? 'bg-card font-medium text-ink shadow-sm' : 'text-muted'}`}
             >
               {s === 'OPEN' ? 'Open' : 'Resolved'}
             </button>
@@ -96,21 +96,21 @@ function Disputes() {
           <EmptyState title={status === 'OPEN' ? 'No open disputes 🎉' : 'No resolved disputes yet'} />
         </div>
       ) : (
-        <ul className="divide-y divide-slate-100">
+        <ul className="divide-y divide-line">
           {data?.disputes.map((d) => (
             <li key={d.id}>
-              <Link to={`/bookings/${d.booking.id}`} className="flex flex-col gap-1 px-5 py-4 hover:bg-slate-50 sm:flex-row sm:items-center sm:justify-between">
+              <Link to={`/bookings/${d.booking.id}`} className="flex flex-col gap-1 px-5 py-4 hover:bg-ivory sm:flex-row sm:items-center sm:justify-between">
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
-                    <p className="font-medium text-slate-900">{d.booking.offerTitle}</p>
+                    <p className="font-medium text-ink">{d.booking.offerTitle}</p>
                     <StatusBadge status={d.booking.status} />
                     {d.proposal && d.status === 'OPEN' && <Badge tone="teal">Proposal pending</Badge>}
                   </div>
-                  <p className="mt-0.5 truncate text-sm text-slate-500">
+                  <p className="mt-0.5 truncate text-sm text-muted">
                     {d.openedBy.name}: “{d.reason}”
                   </p>
                 </div>
-                <p className="shrink-0 text-sm text-slate-500">
+                <p className="shrink-0 text-sm text-muted">
                   {d.teacher.name} ↔ {d.learner.name} · {formatMinutes(d.booking.credits)}
                 </p>
               </Link>
@@ -125,9 +125,9 @@ function Disputes() {
 export default function Admin() {
   return (
     <div className="space-y-6">
-      <PageHeader title="Admin" subtitle="Keep the marketplace fair and the ledger correct." />
+      <PageHeader eyebrow="Admin" title={<>Keep it <em className="italic">fair</em></>} subtitle="Watch the ledger, settle disputes, see how the community is doing." />
       <Stats />
-      <div className="grid gap-6 lg:grid-cols-[1fr_1.4fr]">
+      <div className="grid gap-6 lg:grid-cols-[1fr_1.4fr] [&>*]:min-w-0">
         <HealthCard />
         <Disputes />
       </div>

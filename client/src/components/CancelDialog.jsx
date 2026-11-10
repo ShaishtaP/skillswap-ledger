@@ -26,11 +26,11 @@ export default function CancelDialog({ booking, role, onClose, onConfirm, pendin
       }
     >
       <p>
-        <strong className="text-slate-800">{booking.offerTitle}</strong> with {other}.
+        <strong className="text-ink">{booking.offerTitle}</strong> with {other}.
       </p>
-      <div className="mt-3 rounded-lg bg-slate-50 p-3">
+      <div className="mt-3 rounded-lg bg-ivory p-3">
         <p>
-          {learnerName} <strong className="text-slate-800">{formatMinutes(refund)}</strong> back.
+          {learnerName} <strong className="text-ink">{formatMinutes(refund)}</strong> back.
         </p>
         {fee > 0 && (
           <p className="mt-1 text-amber-700">

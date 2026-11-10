@@ -4,7 +4,7 @@ import { api } from '../lib/api.js';
 import { formatDateTime, formatMinutes } from '../lib/format.js';
 
 const TYPES = {
-  SIGNUP_GRANT: ['teal', 'Welcome credits'],
+  SIGNUP_GRANT: ['gold', 'Welcome credits'],
   BOOKING_HOLD: ['sky', 'Held for booking'],
   SETTLEMENT: ['emerald', 'Earned'],
   REFUND: ['slate', 'Refund'],
@@ -20,52 +20,57 @@ export default function Wallet() {
 
   return (
     <div>
-      <PageHeader title="Wallet" subtitle="Your time credits and every movement in and out." />
+      <PageHeader eyebrow="Wallet" title={<>Every minute, <em className="italic">accounted for</em></>} subtitle="Your time credits and every movement in and out." />
 
-      <div className="grid gap-4 md:grid-cols-[1fr_2fr]">
-        <Card className="bg-gradient-to-br from-teal-600 to-teal-800 p-6 text-white">
-          <p className="text-sm text-teal-100">Available balance</p>
-          <p className="mt-2 text-4xl font-semibold tracking-tight">{formatMinutes(data.balance)}</p>
-          <p className="mt-1 text-sm text-teal-100">{data.balance} credits · 1 credit = 1 minute</p>
+      <div className="grid gap-5 md:grid-cols-[1fr_1.6fr]">
+        <Card className="relative overflow-hidden p-8">
+          <span className="blob -top-16 -right-16 h-48 w-48 bg-gold opacity-25" aria-hidden="true" />
+          <span className="label text-muted">Available balance</span>
+          <p className="gold-text mt-3 font-display text-7xl leading-none">{data.balance}</p>
+          <p className="mt-2 inline-block border-b-[3px] border-double border-ink pb-1 text-ink">minutes · {formatMinutes(data.balance)}</p>
         </Card>
-        <Card className="p-6 text-sm text-slate-600">
-          <p className="font-medium text-slate-800">How your balance is kept honest</p>
-          <p className="mt-2">
-            Every line below is a permanent record: entries are only ever added, never edited or deleted. Each movement has a matching
-            opposite entry somewhere else (for example, the holding account for a booking), so credits can't appear from nowhere
-            and are never paid twice.
+        <Card className="p-8">
+          <span className="label text-gold">How it stays honest</span>
+          <p className="mt-3 leading-relaxed">
+            Every line below is permanent: entries are only ever added, never edited or deleted. Each movement has a matching opposite entry somewhere else (like the
+            holding account for a booking), so credits can't appear from nowhere and are never paid twice.
           </p>
         </Card>
       </div>
 
-      <Card className="mt-6">
-        <div className="border-b border-slate-100 px-5 py-4">
-          <h2 className="font-semibold text-slate-900">Statement</h2>
+      <Card className="mt-8 overflow-hidden">
+        <div className="flex items-center justify-between border-b border-line px-6 py-4">
+          <h2 className="font-display text-xl text-ink">Statement</h2>
+          <span className="label text-muted">{data.entries.length} entries</span>
         </div>
         {data.entries.length === 0 ? (
-          <p className="p-5 text-sm text-slate-500">No movements yet.</p>
+          <p className="p-6 text-muted">No movements yet.</p>
         ) : (
-          <ul className="divide-y divide-slate-100">
+          <ul className="divide-y divide-line">
             {data.entries.map((entry) => {
               const [tone, label] = TYPES[entry.type] ?? ['slate', entry.type];
               return (
-                <li key={entry.id} className="flex items-center justify-between gap-4 px-5 py-3">
+                <li key={entry.id} className="flex items-center justify-between gap-4 px-6 py-4">
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-medium text-slate-800">{entry.memo}</p>
-                    <div className="mt-1 flex items-center gap-2 text-xs text-slate-500">
+                    <p className="truncate text-ink">{entry.memo}</p>
+                    <div className="mt-1.5 flex flex-wrap items-center gap-2 text-sm text-muted">
                       <Badge tone={tone}>{label}</Badge>
                       {formatDateTime(entry.createdAt)}
                     </div>
                   </div>
-                  <p className={`shrink-0 font-semibold tabular-nums ${entry.amount > 0 ? 'text-emerald-700' : 'text-slate-700'}`}>
+                  <p className={`shrink-0 font-mono text-[15px] tabular-nums ${entry.amount > 0 ? 'text-ok' : 'text-ox'}`}>
                     {entry.amount > 0 ? '+' : ''}
-                    {formatMinutes(entry.amount)}
+                    {entry.amount}
                   </p>
                 </li>
               );
             })}
           </ul>
         )}
+        <div className="flex justify-between border-t-[3px] border-double border-ink bg-ivory px-6 py-4 font-mono text-ink">
+          <span>Balance</span>
+          <span>{data.balance}</span>
+        </div>
       </Card>
     </div>
   );
