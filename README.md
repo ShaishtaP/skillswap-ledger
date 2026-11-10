@@ -21,6 +21,8 @@ Every credit movement is recorded in an **append-only, double-entry ledger** wit
 - **Cancellation policy.** Full refund more than 24h before (or if the teacher cancels); 50/50 inside 24h.
 - **Disputes.** Credits stay frozen until the two people agree on a split or an admin decides.
 - **Searchable learning history**, wallet statement and profile.
+- **Built-in video calls.** 1-to-1 WebRTC calls with screen sharing, open from 10 minutes before a session to 15 minutes after. Video goes browser to browser, encrypted, and is never recorded.
+- **Attendance as evidence.** The server records when each person was on the call; when you were both there for most of it, the app suggests confirming, and in a dispute the admin sees the timeline.
 - **Live updates.** Socket.IO pushes booking and dispute changes to both people instantly.
 - **Admin tools.** Ledger health checks, platform stats and a dispute queue.
 - **Animated, accessible hero.** Riso ink shapes slide into registration and follow the mouse; live community numbers count up; everything turns off for people who prefer reduced motion.
@@ -151,12 +153,13 @@ Other members: `priya`, `daniel`, `kabir`, `sara`, `arjun` (all `@skillswap.test
 npm test
 ```
 
-60 tests run against a real MongoDB replica set started in memory:
+68 tests run against a real MongoDB replica set started in memory:
 
 - **Ledger:** balanced legs, integer amounts, idempotency under 10 simultaneous retries, overdraft protection under parallel spends, append-only enforcement, tamper detection
 - **Bookings:** escrow hold, five learners racing for one slot, rollback when credits are short, simultaneous confirmations settle once, all cancellation rules and races
 - **Disputes:** freezing escrow, agreement, stale proposals, admin decisions, agreement vs admin race, access control
 - **API and realtime:** full HTTP flow, validation, authorization, Socket.IO notifications and auth
+- **Video calls:** time window, access control, attendance maths, and real two-client signaling over Socket.IO
 - **Community:** taught counts, member picks, new offers, category filter, homepage stats and recent swaps
 - **Demo data:** every scenario seeds correctly and leaves the ledger healthy
 
@@ -176,12 +179,15 @@ npm test
 | POST | `/api/slots/:id/book` | Book a slot (credits → escrow) |
 | GET | `/api/bookings?role=&status=&q=` | Your sessions, searchable |
 | GET | `/api/bookings/:id` | One booking |
+| GET | `/api/bookings/:id/call` | Call window, whether you can join, and attendance |
 | POST | `/api/bookings/:id/confirm` · `/cancel` · `/dispute` | Confirm attendance, cancel, open a dispute |
 | GET | `/api/disputes/:id` | Dispute with timeline |
 | POST | `/api/disputes/:id/propose` · `/accept` · `/notes` | Propose a split, accept it, add a message |
 | GET | `/api/community/stats` · `/api/community/recent` | Homepage numbers and recently completed sessions (public) |
 | GET | `/api/admin/health` · `/api/admin/stats` · `/api/admin/disputes` | Admin only |
 | POST | `/api/admin/disputes/:id/resolve` | Admin decision |
+
+Video calls use Socket.IO events rather than REST: `call:join`, `call:signal` (offer/answer/ICE, relayed only to the other person), `call:connected`, `call:disconnected`, `call:leave`.
 
 All errors look like `{ "error": { "code": "SLOT_UNAVAILABLE", "message": "...", "details": [...] } }`.
 

@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { Link, useLocation, useParams } from 'react-router';
+import CallCard from '../components/CallCard.jsx';
 import CancelDialog from '../components/CancelDialog.jsx';
 import DisputePanel from '../components/DisputePanel.jsx';
 import RisoArt from '../components/RisoArt.jsx';
@@ -195,6 +196,7 @@ export default function BookingDetail() {
 
       <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_340px]">
         <div className="space-y-6">
+          <CallCard booking={booking} />
           <Actions booking={booking} role={role} />
           {booking.dispute && <DisputePanel disputeId={booking.dispute} booking={booking} />}
         </div>

@@ -39,7 +39,7 @@ export default function Layout() {
   const navigate = useNavigate();
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
-  useRealtime(user);
+  useRealtime();
 
   const wallet = useQuery({ queryKey: ['wallet'], queryFn: () => api('/wallet'), enabled: Boolean(user) });
   const logout = () => {

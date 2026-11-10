@@ -100,3 +100,21 @@ The whole site was redesigned in an editorial "riso print" style: ivory paper, o
 All pages in the browser at desktop and phone width. Fixed: every menu link showing as active (hash links), and the admin grid overflowing on phones (grid items need `min-width: 0` to shrink).
 
 ### Tests: 60 passing
+
+## Day 5: Video calls
+
+**Goal:** sessions happen inside the app, and the call itself becomes evidence for the ledger.
+
+### Built
+- **Signaling** (`services/callSignaling.js`): Socket.IO events to join a call room, relay offers, answers and ICE candidates only to the other person, and report connection state. Access is checked on join: right person, `BOOKED`, inside the window (10 min before → 15 min after).
+- **Attendance** (`models/CallAttendance.js`, `services/calls.js`): connect and disconnect times per person; overlapping intervals are merged and clipped to the session, giving each person's minutes and the minutes both were on together.
+- **`useCall` hook**: one `RTCPeerConnection` per call using the "perfect negotiation" pattern (the learner is the polite side), ICE restart when the network changes, screen sharing by swapping the video track, rejoining after a server reconnect, and receive-only mode for people without a camera or mic.
+- **Call page**: pre-join screen (camera preview, mic level meter, device pickers), then a full-screen call with mute, camera, share screen and leave, a session timer and connection status.
+- **Booking page call card**: join button, time on the call per person, and "Looks like it happened. Confirm?" when both were there for at least half the session.
+- **Your desk**: a "Happening now · Join the call" ticket, and Join buttons on upcoming sessions once the call opens.
+- One shared Socket.IO connection (`SocketContext`) used by notifications and calls.
+
+### Tested
+- 8 new tests (68 total): time window edges, strangers refused, cancelled bookings closed, attendance maths (late arrival, a dropped connection, time outside the session ignored), and real two-client signaling where a stranger's messages go nowhere and closing the tab ends attendance.
+- In the browser with two users in two tabs: join, wait, connect (WebRTC reported *connected*), attendance recorded, leave, rejoin.
+- Not yet tested: real camera and microphone video (the test browser blocks cameras) and a strict network that needs a TURN relay. Both need two real devices.

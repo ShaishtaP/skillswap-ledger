@@ -8,7 +8,7 @@ import { Button, Card, EmptyState, ErrorNote, Loading } from '../components/ui.j
 import { useAuth } from '../context/AuthContext.jsx';
 import { useBookingActions } from '../hooks/useBookingActions.js';
 import { api } from '../lib/api.js';
-import { confirmedBy, hasStarted, myRole, otherPerson } from '../lib/bookings.js';
+import { confirmedBy, hasStarted, isCallOpen, myRole, otherPerson } from '../lib/bookings.js';
 import { formatDateTime, formatMinutes } from '../lib/format.js';
 
 function greeting() {
@@ -32,6 +32,27 @@ function Section({ title, count, children }) {
 function NeedsYou({ booking, role, confirm }) {
   const other = otherPerson(booking, role);
   const otherConfirmed = confirmedBy(booking, role === 'teacher' ? 'learner' : 'teacher');
+  const live = isCallOpen(booking) && Date.now() < new Date(booking.endsAt).getTime();
+  if (live) {
+    return (
+      <div className="ticket grid overflow-hidden rounded-2xl bg-ink text-ivory md:grid-cols-[200px_1fr_180px]">
+        <RisoArt offer={{ title: booking.offerTitle, skills: booking.skills }} className="min-h-40 md:min-h-full" glyphScale={0.9} />
+        <div className="border-b-2 border-dashed border-gold-2/50 p-7 md:border-r-2 md:border-b-0">
+          <span className="label text-gold-2">Happening now · until {formatDateTime(booking.endsAt)}</span>
+          <h3 className="mt-3 font-display text-[28px] leading-tight text-white">
+            {booking.offerTitle} with {other?.name.split(' ')[0]}
+          </h3>
+          <p className="mt-2 text-[#d9d2c4]">The video call is open. Join from here, and confirm once you're done.</p>
+        </div>
+        <div className="flex flex-col justify-center gap-2.5 p-6">
+          <Button to={`/bookings/${booking.id}/call`}>Join the call</Button>
+          <Link to={`/bookings/${booking.id}`} className="rounded-md border border-gold-2/60 px-4 py-2.5 text-center text-sm text-gold-2 hover:bg-white/5">
+            Details
+          </Link>
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="ticket grid overflow-hidden rounded-2xl bg-ink text-ivory md:grid-cols-[200px_1fr_180px]">
       <RisoArt offer={{ title: booking.offerTitle, skills: booking.skills }} className="min-h-40 md:min-h-full" glyphScale={0.9} />
@@ -153,9 +174,15 @@ export default function Dashboard() {
                 booking={b}
                 showStatus={false}
                 actions={
-                  <Button size="sm" variant="ghost" onClick={() => setCancelling(b)}>
-                    Cancel
-                  </Button>
+                  isCallOpen(b) ? (
+                    <Button size="sm" to={`/bookings/${b.id}/call`}>
+                      Join call
+                    </Button>
+                  ) : (
+                    <Button size="sm" variant="ghost" onClick={() => setCancelling(b)}>
+                      Cancel
+                    </Button>
+                  )
                 }
               />
             ))}

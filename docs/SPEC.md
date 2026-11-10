@@ -70,6 +70,14 @@ Either party can open a dispute on a `BOOKED` session after its start time. Cred
 1. **Mutual agreement:** one party proposes an outcome (`REFUND_LEARNER`, `PAY_TEACHER`, or `SPLIT`). If the other party accepts, it is applied.
 2. **Admin decision:** if they can't agree, an admin reviews the notes and decides. The admin's decision is final.
 
+## Video calls
+
+- 1-to-1 WebRTC calls between the teacher and the learner, with screen sharing. Media flows browser to browser (encrypted); the server only relays connection details (signaling) over Socket.IO.
+- The call is open from **10 minutes before** the start to **15 minutes after** the end, only for the two people in a `BOOKED` booking.
+- **Attendance:** the server records connect and disconnect times (server clock) for each person. Only time inside the scheduled session counts.
+- If both were connected for at least half the session, the app **suggests** confirming. It never confirms on its own; credits only move when a person confirms.
+- Nothing is recorded except those times.
+
 ## Tech stack
 
 | Layer | Choice |

@@ -4,6 +4,7 @@ import { Loading } from './components/ui.jsx';
 import { useAuth } from './context/AuthContext.jsx';
 import Admin from './pages/Admin.jsx';
 import BookingDetail from './pages/BookingDetail.jsx';
+import Call from './pages/Call.jsx';
 import Browse from './pages/Browse.jsx';
 import Dashboard from './pages/Dashboard.jsx';
 import History from './pages/History.jsx';
@@ -40,6 +41,7 @@ export default function App() {
         <Route path="wallet" element={<RequireAuth><Wallet /></RequireAuth>} />
         <Route path="profile" element={<RequireAuth><Profile /></RequireAuth>} />
         <Route path="bookings/:id" element={<RequireAuth><BookingDetail /></RequireAuth>} />
+        <Route path="bookings/:id/call" element={<RequireAuth><Call /></RequireAuth>} />
         <Route path="admin" element={<RequireAuth admin><Admin /></RequireAuth>} />
         <Route path="*" element={<NotFound />} />
       </Route>

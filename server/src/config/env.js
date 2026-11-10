@@ -30,4 +30,12 @@ export const config = {
   clientDist: path.resolve(here, '../../../client/dist'),
   // Every new user starts with 2 hours so they can book before they teach.
   signupGrantMinutes: 120,
+  // How browsers find a route to each other for video calls. STUN (free,
+  // public) works for most networks; a TURN relay is needed for strict ones.
+  iceServers: [
+    { urls: 'stun:stun.l.google.com:19302' },
+    ...(process.env.TURN_URLS
+      ? [{ urls: process.env.TURN_URLS.split(',').map((u) => u.trim()), username: process.env.TURN_USERNAME, credential: process.env.TURN_CREDENTIAL }]
+      : []),
+  ],
 };

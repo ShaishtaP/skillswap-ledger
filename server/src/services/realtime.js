@@ -1,6 +1,7 @@
 import { Server } from 'socket.io';
 import { idOf } from '../utils/transaction.js';
 import { verifyToken } from './auth.js';
+import { registerCallHandlers } from './callSignaling.js';
 
 // Socket.IO keeps a live connection open to each logged-in browser. Every
 // user joins a private "room" named after their id, so the server can push
@@ -25,6 +26,7 @@ export function initRealtime(httpServer, { corsOrigin } = {}) {
     const { id, role } = socket.data.user;
     socket.join(`user:${id}`);
     if (role === 'admin') socket.join('admins');
+    registerCallHandlers(io, socket);
   });
 
   return io;

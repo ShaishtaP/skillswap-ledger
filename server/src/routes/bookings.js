@@ -4,6 +4,7 @@ import { requireAuth } from '../middleware/auth.js';
 import { parseQuery, validateBody } from '../middleware/validate.js';
 import { BOOKING_STATUSES } from '../models/index.js';
 import { cancelBooking, confirmAttendance, getBooking, listBookings } from '../services/bookings.js';
+import { getCallInfo } from '../services/calls.js';
 import { openDispute } from '../services/disputes.js';
 
 const router = Router();
@@ -27,6 +28,11 @@ router.get('/', async (req, res) => {
 
 router.get('/:id', async (req, res) => {
   res.json({ booking: await getBooking(req.user, req.params.id) });
+});
+
+// Video call window and who has been on the call so far.
+router.get('/:id/call', async (req, res) => {
+  res.json(await getCallInfo(req.user, req.params.id));
 });
 
 router.post('/:id/confirm', async (req, res) => {

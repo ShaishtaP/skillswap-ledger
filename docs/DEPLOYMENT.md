@@ -58,6 +58,15 @@ Every push to `main` redeploys automatically.
 - Put the live link at the top of the README (replace "_coming soon_").
 - Log in as `admin@skillswap.test` and click **Run checks** on the Admin page. It should say *All checks passed*.
 
+## Optional: a TURN relay for video calls
+
+Video calls connect the two browsers directly. On most home and mobile networks that just works using a free public STUN server. Some strict networks (offices, some colleges) block direct connections; for those, the call needs a **TURN relay**.
+
+1. Create a free account with a TURN provider (for example Metered) and copy its TURN URLs, username and credential.
+2. In Render: your service → **Environment** → add `TURN_URLS` (comma-separated), `TURN_USERNAME`, `TURN_CREDENTIAL` → **Save**. Render redeploys.
+
+The credentials stay on the server and are only sent to the two people in a call, when they join.
+
 ## Environment variables
 
 | Variable | Required | Description |
@@ -68,3 +77,4 @@ Every push to `main` redeploys automatically.
 | `PORT` | | Set by Render automatically |
 | `JWT_EXPIRES_IN` | | Login lifetime, default `7d` |
 | `CLIENT_ORIGIN` | | Only for local development, default `http://localhost:5173` |
+| `TURN_URLS`, `TURN_USERNAME`, `TURN_CREDENTIAL` | | Optional TURN relay for video calls on strict networks |
