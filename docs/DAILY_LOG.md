@@ -117,4 +117,5 @@ All pages in the browser at desktop and phone width. Fixed: every menu link show
 ### Tested
 - 8 new tests (68 total): time window edges, strangers refused, cancelled bookings closed, attendance maths (late arrival, a dropped connection, time outside the session ignored), and real two-client signaling where a stranger's messages go nowhere and closing the tab ends attendance.
 - In the browser with two users in two tabs: join, wait, connect (WebRTC reported *connected*), attendance recorded, leave, rejoin.
-- Not yet tested: real camera and microphone video (the test browser blocks cameras) and a strict network that needs a TURN relay. Both need two real devices.
+- **Real devices on the live site:** a phone on mobile data and a laptop on Wi-Fi saw and heard each other; the server recorded both joining at the same second and leaving a minute later. This connected directly, without a TURN relay.
+- Not yet tested: a strict network (office or college Wi-Fi) that blocks direct connections and needs a TURN relay.
