@@ -9,6 +9,7 @@ import { errorHandler, notFound } from './middleware/error.js';
 import adminRoutes from './routes/admin.js';
 import authRoutes from './routes/auth.js';
 import bookingRoutes from './routes/bookings.js';
+import communityRoutes from './routes/community.js';
 import disputeRoutes from './routes/disputes.js';
 import offerRoutes from './routes/offers.js';
 import slotRoutes from './routes/slots.js';
@@ -42,6 +43,7 @@ export function createApp() {
   app.use('/api/bookings', bookingRoutes);
   app.use('/api/disputes', disputeRoutes);
   app.use('/api/admin', adminRoutes);
+  app.use('/api/community', communityRoutes);
 
   // In production the same server also hosts the React website. Any
   // non-API page (e.g. /dashboard) gets index.html and React Router takes over.

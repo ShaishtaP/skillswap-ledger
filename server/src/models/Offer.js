@@ -1,12 +1,18 @@
 import mongoose from 'mongoose';
 import { cleanJSON } from './plugins.js';
 
+// The "crafts" learners browse by. Skills stay free-form tags.
+export const CATEGORIES = ['Programming', 'Languages', 'Music', 'Art', 'Productivity', 'Communication', 'Games', 'Other'];
+
 // Something a user can teach. Learners book one of its time slots.
 const offerSchema = new mongoose.Schema(
   {
     teacher: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
     title: { type: String, required: true, trim: true, maxlength: 100 },
     description: { type: String, default: '', maxlength: 2000 },
+    // What the learner walks away with, e.g. "a tiny quiz game you wrote yourself".
+    outcome: { type: String, default: '', maxlength: 160 },
+    category: { type: String, enum: CATEGORIES, default: 'Other' },
     skills: { type: [String], default: [] },
     // Also the price: a 60-minute session costs 60 credits.
     durationMinutes: { type: Number, required: true, min: 15, max: 240 },

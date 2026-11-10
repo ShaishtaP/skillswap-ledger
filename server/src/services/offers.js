@@ -1,9 +1,11 @@
-import { Offer, Slot } from '../models/index.js';
+import { Booking, Offer, Slot } from '../models/index.js';
 import { AppError } from '../utils/errors.js';
 import { idOf } from '../utils/transaction.js';
 
 const MAX_DAYS_AHEAD = 90;
 const DAY_MS = 24 * 60 * 60 * 1000;
+const NEW_FOR_DAYS = 7;
+const MEMBER_PICKS = 2;
 
 // Turns user input into a safe regex (so "c++" searches for "c++" literally).
 export function searchRegex(text) {
@@ -17,8 +19,39 @@ async function loadOwnOffer(teacherId, offerId) {
   return offer;
 }
 
-export async function createOffer(teacherId, data) {
-  return Offer.create({ ...data, teacher: teacherId });
+export async function createOffer(teacherId, data, { now = new Date() } = {}) {
+  return Offer.create({ ...data, teacher: teacherId, createdAt: now });
+}
+
+// How popular each offer is: seats booked (anything not cancelled) and
+// sessions actually taught (completed). The most-booked offers, with at
+// least two bookings, are marked as "member picks".
+async function popularity() {
+  const rows = await Booking.aggregate([
+    { $match: { status: { $ne: 'CANCELLED' } } },
+    {
+      $group: {
+        _id: '$offer',
+        booked: { $sum: 1 },
+        taught: { $sum: { $cond: [{ $eq: ['$status', 'COMPLETED'] }, 1, 0] } },
+      },
+    },
+  ]);
+  const picks = rows
+    .filter((r) => r.booked >= 2)
+    .sort((a, b) => b.booked - a.booked || b.taught - a.taught || String(a._id).localeCompare(String(b._id)))
+    .slice(0, MEMBER_PICKS)
+    .map((r) => String(r._id));
+  return { byOffer: new Map(rows.map((r) => [String(r._id), r])), picks: new Set(picks) };
+}
+
+function decorate(offer, { byOffer, picks }, now) {
+  return {
+    ...offer.toJSON(),
+    taughtCount: byOffer.get(offer.id)?.taught ?? 0,
+    memberPick: picks.has(offer.id),
+    isNew: now - offer.createdAt < NEW_FOR_DAYS * DAY_MS,
+  };
 }
 
 export async function updateOffer(teacherId, offerId, changes) {
@@ -33,8 +66,9 @@ export async function updateOffer(teacherId, offerId, changes) {
 }
 
 // Public catalogue: active offers, newest first, with their next open times.
-export async function listOffers({ q, skill, limit = 30 } = {}, { now = new Date() } = {}) {
+export async function listOffers({ q, skill, category, limit = 30 } = {}, { now = new Date() } = {}) {
   const filter = { active: true };
+  if (category) filter.category = category;
   if (q?.trim()) {
     const re = searchRegex(q);
     filter.$or = [{ title: re }, { description: re }, { skills: re }];
@@ -48,10 +82,11 @@ export async function listOffers({ q, skill, limit = 30 } = {}, { now = new Date
     { $group: { _id: '$offer', openSlots: { $sum: 1 }, nextSlotAt: { $min: '$startsAt' } } },
   ]);
   const statsByOffer = new Map(slotStats.map((s) => [String(s._id), s]));
+  const pop = await popularity();
 
   return offers.map((offer) => {
     const stats = statsByOffer.get(offer.id);
-    return { ...offer.toJSON(), openSlots: stats?.openSlots ?? 0, nextSlotAt: stats?.nextSlotAt ?? null };
+    return { ...decorate(offer, pop, now), openSlots: stats?.openSlots ?? 0, nextSlotAt: stats?.nextSlotAt ?? null };
   });
 }
 
@@ -59,7 +94,7 @@ export async function getOffer(offerId, { now = new Date() } = {}) {
   const offer = await Offer.findById(offerId).populate('teacher', 'name bio skills');
   if (!offer) throw new AppError(404, 'NOT_FOUND', 'Offer not found');
   const slots = await Slot.find({ offer: offer._id, status: 'OPEN', startsAt: { $gt: now } }).sort({ startsAt: 1 });
-  return { ...offer.toJSON(), slots };
+  return { ...decorate(offer, await popularity(), now), slots };
 }
 
 // The teacher's own view: every offer plus its upcoming slots in any state.

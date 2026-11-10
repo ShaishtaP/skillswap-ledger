@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { requireAuth } from '../middleware/auth.js';
+import { CATEGORIES } from '../models/index.js';
 import { parseQuery, validateBody } from '../middleware/validate.js';
 import { createOffer, createSlot, getOffer, listMyOffers, listOffers, updateOffer } from '../services/offers.js';
 import { skillsField } from './schemas.js';
@@ -10,6 +11,8 @@ const router = Router();
 const offerFields = {
   title: z.string().trim().min(3, 'Title must be at least 3 characters').max(100),
   description: z.string().trim().max(2000).default(''),
+  outcome: z.string().trim().max(160, 'Keep it under 160 characters').default(''),
+  category: z.enum(CATEGORIES).default('Other'),
   skills: skillsField.default([]),
   durationMinutes: z
     .number()
@@ -23,12 +26,15 @@ const createSchema = z.object(offerFields);
 const updateSchema = z.object({
   title: offerFields.title.optional(),
   description: z.string().trim().max(2000).optional(),
+  outcome: z.string().trim().max(160).optional(),
+  category: z.enum(CATEGORIES).optional(),
   skills: skillsField.optional(),
   active: z.boolean().optional(),
 });
 const listSchema = z.object({
   q: z.string().max(100).optional(),
   skill: z.string().max(30).optional(),
+  category: z.enum(CATEGORIES).optional(),
 });
 const slotSchema = z.object({ startsAt: z.iso.datetime({ offset: true, message: 'Use an ISO date-time' }) });
 

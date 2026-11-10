@@ -21,16 +21,16 @@ const PEOPLE = [
 ];
 
 const OFFERS = [
-  { key: 'spanish', teacher: 'aisha', title: 'Conversational Spanish for Beginners', durationMinutes: 60, skills: ['spanish', 'languages'], description: 'Greetings, ordering food and small talk. No grammar drills, just speaking practice.' },
-  { key: 'git', teacher: 'rohan', title: 'Git & GitHub from Zero', durationMinutes: 45, skills: ['git', 'programming'], description: 'Commits, branches, pull requests and fixing the most common mistakes.' },
-  { key: 'linux', teacher: 'rohan', title: 'Linux Command Line Basics', durationMinutes: 60, skills: ['linux', 'programming'], description: 'Navigate files, use pipes, and stop being scared of the terminal.' },
-  { key: 'watercolor', teacher: 'priya', title: 'Watercolor Basics', durationMinutes: 90, skills: ['painting', 'art'], description: 'Washes, wet-on-wet and a simple landscape. Bring paper and three colours.' },
-  { key: 'guitar', teacher: 'daniel', title: 'Guitar Chords in One Session', durationMinutes: 60, skills: ['guitar', 'music'], description: 'Learn G, C, D and Em and play your first full song.' },
-  { key: 'python', teacher: 'meera', title: 'Intro to Python', durationMinutes: 60, skills: ['python', 'programming'], description: 'Variables, loops and functions by building a tiny quiz game.' },
-  { key: 'dsa', teacher: 'meera', title: 'DSA Interview Warm-up', durationMinutes: 60, skills: ['dsa', 'interviews', 'programming'], description: 'Solve two classic problems together and talk through your thinking out loud.' },
-  { key: 'speaking', teacher: 'kabir', title: 'Public Speaking Practice', durationMinutes: 30, skills: ['communication', 'confidence'], description: 'Give a 3-minute talk and get friendly, specific feedback.' },
-  { key: 'excel', teacher: 'sara', title: 'Excel Formulas That Save Hours', durationMinutes: 45, skills: ['excel', 'productivity'], description: 'XLOOKUP, pivot tables and conditional formatting with real examples.' },
-  { key: 'chess', teacher: 'arjun', title: 'Chess Openings for Improvers', durationMinutes: 60, skills: ['chess', 'games'], description: 'Two solid openings for white and black, and the ideas behind them.' },
+  { key: 'spanish', teacher: 'aisha', title: 'Conversational Spanish for Beginners', category: 'Languages', outcome: 'Enough Spanish to order food and make small talk.', durationMinutes: 60, skills: ['spanish', 'languages'], description: 'Greetings, ordering food and small talk. No grammar drills, just speaking practice.' },
+  { key: 'git', teacher: 'rohan', title: 'Git & GitHub from Zero', category: 'Programming', outcome: 'Your first pull request, opened and merged.', durationMinutes: 45, skills: ['git', 'programming'], description: 'Commits, branches, pull requests and fixing the most common mistakes.' },
+  { key: 'linux', teacher: 'rohan', title: 'Linux Command Line Basics', category: 'Programming', outcome: 'A cheat sheet of commands you have actually used.', durationMinutes: 60, skills: ['linux', 'programming'], description: 'Navigate files, use pipes, and stop being scared of the terminal.' },
+  { key: 'watercolor', teacher: 'priya', title: 'Watercolor Basics', category: 'Art', outcome: 'A small landscape painted wet-on-wet.', durationMinutes: 90, skills: ['painting', 'art'], description: 'Washes, wet-on-wet and a simple landscape. Bring paper and three colours.' },
+  { key: 'guitar', teacher: 'daniel', title: 'Guitar Chords in One Session', category: 'Music', outcome: 'Four chords and your first full song.', durationMinutes: 60, skills: ['guitar', 'music'], description: 'Learn G, C, D and Em and play your first full song.' },
+  { key: 'python', teacher: 'meera', title: 'Intro to Python', category: 'Programming', outcome: 'A tiny quiz game you wrote yourself.', durationMinutes: 60, skills: ['python', 'programming'], description: 'Variables, loops and functions by building a tiny quiz game.' },
+  { key: 'dsa', teacher: 'meera', title: 'DSA Interview Warm-up', category: 'Programming', outcome: 'Two classic problems solved out loud, calmly.', durationMinutes: 60, skills: ['dsa', 'interviews', 'programming'], description: 'Solve two classic problems together and talk through your thinking out loud.' },
+  { key: 'speaking', teacher: 'kabir', title: 'Public Speaking Practice', category: 'Communication', outcome: 'A three-minute talk and honest, specific notes.', durationMinutes: 30, skills: ['communication', 'confidence'], description: 'Give a 3-minute talk and get friendly, specific feedback.' },
+  { key: 'excel', teacher: 'sara', title: 'Excel Formulas That Save Hours', category: 'Productivity', outcome: 'A reusable budget sheet built with XLOOKUP.', durationMinutes: 45, skills: ['excel', 'productivity'], description: 'XLOOKUP, pivot tables and conditional formatting with real examples.' },
+  { key: 'chess', teacher: 'arjun', title: 'Chess Openings for Improvers', category: 'Games', outcome: 'Two solid openings and the ideas behind them.', durationMinutes: 60, skills: ['chess', 'games'], description: 'Two solid openings for white and black, and the ideas behind them.' },
 ];
 
 const HOUR = 60 * 60 * 1000;
@@ -56,7 +56,9 @@ export async function seedDemo({ now = new Date(), log = () => {} } = {}) {
 
   const offers = {};
   for (const { key, teacher, ...data } of OFFERS) {
-    offers[key] = await createOffer(users[teacher].id, data);
+    // Most offers have been around since the start; Excel is new this week.
+    const createdAt = key === 'excel' ? new Date(now.getTime() - 2 * DAY) : founded;
+    offers[key] = await createOffer(users[teacher].id, data, { now: createdAt });
   }
   const teacherOf = (offerKey) => users[OFFERS.find((o) => o.key === offerKey).teacher];
 
