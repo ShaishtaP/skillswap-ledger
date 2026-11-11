@@ -72,8 +72,12 @@ export async function applyDbRules(db = mongoose.connection.db) {
 
 /** Which collections currently have the rules installed (for the admin check). */
 export async function checkDbRules(db = mongoose.connection.db) {
-  const infos = await db.listCollections({ name: { $in: Object.keys(DB_RULES) } }).toArray();
+  // List everything and filter here: Atlas's free tier rejects operators like
+  // $in in a listCollections filter ("can't get regex from filter doc").
+  const infos = await db.listCollections().toArray();
   const active = Object.fromEntries(Object.keys(DB_RULES).map((name) => [name, false]));
-  for (const info of infos) active[info.name] = Boolean(info.options?.validator?.$jsonSchema);
+  for (const info of infos) {
+    if (info.name in active) active[info.name] = Boolean(info.options?.validator?.$jsonSchema);
+  }
   return { ok: Object.values(active).every(Boolean), collections: active };
 }

@@ -132,6 +132,7 @@ All pages in the browser at desktop and phone width. Fixed: every menu link show
 
 ### Fixed while testing
 - On a brand-new database the accounts rule was silently missing: Mongoose creates collections by itself while connecting, so it could create `accounts` between our "does it exist?" check and our create. Now "already exists" falls back to `collMod`, with a test for the race.
+- On the live site the admin health check failed: Atlas's free tier rejects `$in` inside a `listCollections` filter (local MongoDB accepts it). The check now lists all collections and filters in code. The rules themselves were installed on the live database correctly.
 
 ### Limits (on purpose)
 Validators check what a document looks like, not whether it was changed. Editing or deleting a valid ledger entry is still blocked by the app, not the database, and the invariant checks would detect it.
