@@ -90,6 +90,3 @@ Either party can open a dispute on a `BOOKED` session after its start time. Cred
 | Hosting | Render (one service: API + website), MongoDB Atlas (database) |
 | CI | GitHub Actions (tests + frontend build on every push) |
 
-## Build log
-
-The original plan was 7 days. Day 1 built the foundation (auth and the ledger); Day 2 built everything else. See [DAILY_LOG.md](DAILY_LOG.md).
