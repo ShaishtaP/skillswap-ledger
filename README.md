@@ -27,9 +27,13 @@ Every credit movement is recorded in an **append-only, double-entry ledger** wit
 - **Admin tools.** Ledger health checks, platform stats and a dispute queue.
 - **Animated, accessible hero.** Riso ink shapes slide into registration and follow the mouse; live community numbers count up; everything turns off for people who prefer reduced motion.
 
-| Dashboard | Dispute resolution | Admin |
-|---|---|---|
-| ![Dashboard](docs/screenshots/dashboard.jpg) | ![Dispute](docs/screenshots/dispute.jpg) | ![Admin](docs/screenshots/admin.jpg) |
+| Browse sessions | Session page |
+|---|---|
+| ![Browse sessions](docs/screenshots/browse.jpg) | ![Session page](docs/screenshots/offer.jpg) |
+| **Your desk** | **Wallet statement** |
+| ![Your desk](docs/screenshots/dashboard.jpg) | ![Wallet statement](docs/screenshots/wallet.jpg) |
+| **Dispute resolution** | **Admin: ledger health** |
+| ![Dispute resolution](docs/screenshots/dispute.jpg) | ![Admin](docs/screenshots/admin.jpg) |
 
 ## How the ledger works
 
