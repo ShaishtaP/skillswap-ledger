@@ -1,9 +1,12 @@
 import mongoose from 'mongoose';
 import './models/index.js';
+import { applyDbRules } from './dbRules.js';
 
 // Build collections and indexes up front. Our safety guarantees depend on
 // unique indexes, and MongoDB transactions can't create them on the fly.
 export async function initModels() {
+  // Database-level rules first, so new collections are created with them.
+  await applyDbRules();
   await Promise.all(Object.values(mongoose.models).map((model) => model.init()));
 }
 

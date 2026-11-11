@@ -57,6 +57,7 @@ Both confirm attendance      escrow:b1        −60
 | No double payouts on retry | Each transaction has a unique key (`settle:<bookingId>`) backed by a unique index |
 | No overdraft under concurrency | Balance check and subtraction are one atomic conditional update inside the transaction |
 | All or nothing | Ledger entries and the related status change commit in one MongoDB transaction |
+| Rules hold even outside the app | MongoDB schema validators (`$jsonSchema`) make the database itself reject negative balances, fractional or zero amounts and unknown entry types, even for writes that bypass the app |
 
 ### Race conditions handled (each one has a test)
 
@@ -157,7 +158,7 @@ Other members: `priya`, `daniel`, `kabir`, `sara`, `arjun` (all `@skillswap.test
 npm test
 ```
 
-68 tests run against a real MongoDB replica set started in memory:
+78 tests run against a real MongoDB replica set started in memory:
 
 - **Ledger:** balanced legs, integer amounts, idempotency under 10 simultaneous retries, overdraft protection under parallel spends, append-only enforcement, tamper detection
 - **Bookings:** escrow hold, five learners racing for one slot, rollback when credits are short, simultaneous confirmations settle once, all cancellation rules and races
@@ -165,6 +166,7 @@ npm test
 - **API and realtime:** full HTTP flow, validation, authorization, Socket.IO notifications and auth
 - **Video calls:** time window, access control, attendance maths, and real two-client signaling over Socket.IO
 - **Community:** taught counts, member picks, new offers, category filter, homepage stats and recent swaps
+- **Database rules:** raw writes that skip the app (negative balances, bad amounts, unknown types) are rejected by MongoDB itself, and the rules are installed on new and existing collections
 - **Demo data:** every scenario seeds correctly and leaves the ledger healthy
 
 ## API

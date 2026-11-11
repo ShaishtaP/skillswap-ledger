@@ -32,6 +32,7 @@ Credits are fictional and never connected to real money.
 3. **Idempotent.** Each transaction has a unique key (e.g. `settle:<bookingId>`). Writing the same key twice is a no-op.
 4. **No overdraft.** Spending checks and subtracts the balance in a single atomic operation.
 5. **Atomic.** All legs of a transaction, plus any related document change (e.g. booking status), commit together or not at all (MongoDB transactions).
+6. **Enforced by the database too.** MongoDB schema validators reject, for every write including ones that bypass the app: a negative balance on any account except `mint`, amounts that are zero or not whole numbers, unknown entry types and malformed account names. (Validators check what a document looks like; they can't forbid editing a valid entry, so append-only stays an app rule, backed by the invariant checks.)
 
 ### Invariants (checked by tests and the admin endpoint)
 

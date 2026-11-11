@@ -33,6 +33,12 @@ function HealthCard() {
             <li>✓ Every stored balance matches its ledger entries</li>
             <li>✓ No member has a negative balance</li>
             <li>✓ Escrow of all {data.escrow.bookingsChecked} bookings matches their status</li>
+            {data.dbRules &&
+              (data.dbRules.ok ? (
+                <li>✓ The database itself rejects negative balances and malformed ledger entries</li>
+              ) : (
+                <li className="text-muted">○ Database-level rules aren&apos;t installed; the app&apos;s own checks still apply</li>
+              ))}
           </ul>
           {[...data.ledger.problems, ...data.escrow.problems].map((p) => (
             <p key={p} className="mt-2 rounded bg-rose-50 px-3 py-2 font-mono text-xs text-rose-700">

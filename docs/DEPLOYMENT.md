@@ -58,6 +58,15 @@ Every push to `main` redeploys automatically.
 - Put the live link at the top of the README (replace "_coming soon_").
 - Log in as `admin@skillswap.test` and click **Run checks** on the Admin page. It should say *All checks passed*.
 
+## Database-level rules
+
+When the server starts, it installs MongoDB schema validators on the `accounts` and `ledgerentries` collections, so the database itself rejects negative balances and malformed ledger entries (see [SPEC.md](SPEC.md)).
+
+- On a **new** database this works with any database user that can read and write.
+- Adding the rules to collections that **already exist** needs the `collMod` permission, which Atlas's *Read and write to any database* role doesn't include. If it's missing, the server logs `Could not install database rules…` and keeps running with the app's own checks.
+- To check: log in as the admin and click **Run checks**. The last line says whether the database rules are on.
+- To turn them on for an existing database: in Atlas → **Database Access**, edit the app's user and give it the **Atlas admin** role (or `dbAdmin` on the `skillswap` database), then restart the service on Render.
+
 ## Optional: a TURN relay for video calls
 
 Video calls connect the two browsers directly. On most home and mobile networks that just works using a free public STUN server. Some strict networks (offices, some colleges) block direct connections; for those, the call needs a **TURN relay**.

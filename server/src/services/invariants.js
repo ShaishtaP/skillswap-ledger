@@ -1,5 +1,6 @@
 import { Booking, Dispute, LedgerEntry, Offer, User } from '../models/index.js';
 import { OPEN_BOOKING_STATUSES } from '../models/Booking.js';
+import { checkDbRules } from '../dbRules.js';
 import { MINT, checkInvariants, escrowAccount, getBalance } from './ledger.js';
 
 /**
@@ -25,8 +26,10 @@ export async function checkEscrow() {
 }
 
 export async function fullHealthReport() {
-  const [ledger, escrow] = await Promise.all([checkInvariants(), checkEscrow()]);
-  return { ok: ledger.ok && escrow.ok, checkedAt: new Date(), ledger, escrow };
+  const [ledger, escrow, dbRules] = await Promise.all([checkInvariants(), checkEscrow(), checkDbRules()]);
+  // dbRules is extra protection, reported separately: the data can be
+  // perfectly correct without it, so it doesn't change `ok`.
+  return { ok: ledger.ok && escrow.ok, checkedAt: new Date(), ledger, escrow, dbRules };
 }
 
 export async function platformStats() {

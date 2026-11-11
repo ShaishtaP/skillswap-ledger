@@ -119,3 +119,22 @@ All pages in the browser at desktop and phone width. Fixed: every menu link show
 - In the browser with two users in two tabs: join, wait, connect (WebRTC reported *connected*), attendance recorded, leave, rejoin.
 - **Real devices on the live site:** a phone on mobile data and a laptop on Wi-Fi saw and heard each other; the server recorded both joining at the same second and leaving a minute later. This connected directly, without a TURN relay.
 - Not yet tested: a strict network (office or college Wi-Fi) that blocks direct connections and needs a TURN relay.
+
+## Day 6: Rules the database enforces itself
+
+**Goal:** close the classic "MongoDB isn't strict enough for money" gap by moving key ledger rules from the app into the database.
+
+### Built
+- **Schema validators** (`server/src/dbRules.js`): MongoDB `$jsonSchema` rules on `accounts` (whole-minute balances, never negative except the mint, valid account names) and `ledgerentries` (known type, valid account, whole non-zero amount, required fields). A write that breaks them fails with error 121, even when it skips the app entirely.
+- Installed on startup: created with new collections, added to existing ones with `collMod`. Without permission for `collMod` the server logs a warning and keeps running.
+- **Admin health check** now reports whether the database rules are on.
+- README screenshots refreshed with the new design (7 pages).
+
+### Fixed while testing
+- On a brand-new database the accounts rule was silently missing: Mongoose creates collections by itself while connecting, so it could create `accounts` between our "does it exist?" check and our create. Now "already exists" falls back to `collMod`, with a test for the race.
+
+### Limits (on purpose)
+Validators check what a document looks like, not whether it was changed. Editing or deleting a valid ledger entry is still blocked by the app, not the database, and the invariant checks would detect it.
+
+### Tests: 78 passing
+10 new tests write straight to MongoDB with the raw driver (skipping Mongoose) and confirm the database refuses bad data, while everything the app writes normally is still accepted.
